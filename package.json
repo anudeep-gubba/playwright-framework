@@ -1,0 +1,45 @@
+{
+  "name": "playwright-framework",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "playwright test",
+    "smoke": "playwright test --grep @smoke",
+    "api": "playwright test tests/api",
+    "ui": "playwright test tests/ui",
+    "hybrid": "playwright test tests/hybrid",
+    "allure:generate": "allure generate allure-results --clean",
+    "allure:open": "allure open allure-report",
+    "report": "playwright show-report",
+    "allure-report": "npm run allure:generate && npm run allure:open"
+  },
+  "dependencies": {
+    "allure-js-commons": "^3.10.2",
+    "csv-parse": "^7.0.1",
+    "dotenv": "^17.4.2",
+    "winston": "^3.19.0",
+    "xlsx": "^0.18.5",
+    "yaml": "^2.9.0"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.61.1",
+    "allure-commandline": "^2.43.0",
+    "allure-playwright": "^3.10.2",
+    "cross-env": "^10.1.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^7.0.2"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/anudeep-gubba/playwright-framework.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/anudeep-gubba/playwright-framework/issues"
+  },
+  "homepage": "https://github.com/anudeep-gubba/playwright-framework#readme"
+}

@@ -1,0 +1,49 @@
+{
+  "login": {
+    "validUser": {
+      "email": "testaccountag@gmail.com",
+      "password": "Test@1234"
+    },
+    "invalidPassword": {
+      "email": "valid@test.com",
+      "password": "WrongPassword"
+    },
+    "invalidEmail": {
+      "email": "invalid@test.com",
+      "password": "Password123"
+    }
+  },
+
+  "registration": {
+    "newUser": {
+      "firstName": "John",
+      "lastName": "Doe",
+      "email": "john@test.com",
+      "password": "Password123"
+    },
+    "emptyFirstName": {
+      "firstName": "",
+      "lastName": "Doe",
+      "email": "john@test.com",
+      "password": "Password123"
+    },
+    "emptyLastName": {
+      "firstName": "John",
+      "lastName": "",
+      "email": "john@test.com",
+      "password": "Password123"
+    },
+    "emptyEmail": {
+      "firstName": "John",
+      "lastName": "Doe",
+      "email": "",
+      "password": "Password123"
+    },
+    "emptyPassword": {
+      "firstName": "John",
+      "lastName": "Doe",
+      "email": "john@test.com",
+      "password": ""
+    }
+  }
+}

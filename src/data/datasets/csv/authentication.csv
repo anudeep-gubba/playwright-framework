@@ -1,0 +1,9 @@
+module,scenario,firstName,lastName,email,password
+login,validUser,,,testaccountag@gmail.com,Test@1234
+login,invalidPassword,,,valid@test.com,WrongPassword
+login,invalidEmail,,,invalid@test.com,Password123
+registration,newUser,John,Doe,john@test.com,Password123
+registration,emptyFirstName,,Doe,john@test.com,Password123
+registration,emptyLastName,John,,john@test.com,Password123
+registration,emptyEmail,John,Doe,,Password123
+registration,emptyPassword,John,Doe,john@test.com,
