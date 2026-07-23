@@ -1,4 +1,4 @@
-import { test as base, expect, request } from "@playwright/test";
+import { test as base, expect } from "@playwright/test";
 
 import { LoginPage } from "../pages/LoginPage";
 import { RegistrationPage } from "../pages/RegistrationPage";
@@ -10,13 +10,11 @@ type FrameworkFixtures = {
 
 export const test = base.extend<FrameworkFixtures>({
   loginPage: async ({ page }, use) => {
-    const loginPage = new LoginPage(page);
-    await use(loginPage);
+    await use(new LoginPage(page));
   },
 
   registrationPage: async ({ page }, use) => {
-    const registrationPage = new RegistrationPage(page);
-    await use(registrationPage);
+    await use(new RegistrationPage(page));
   },
 });
 

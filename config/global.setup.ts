@@ -15,7 +15,6 @@ async function globalSetup() {
   });
 
   const storageState = path.join(process.cwd(), "src/storageState/user.json");
-
   if (fs.existsSync(storageState)) {
     fs.unlinkSync(storageState);
   }

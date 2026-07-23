@@ -24,7 +24,6 @@ test.describe("Authentication :: Login", () => {
     ["Invalid password", authentication.login.invalidPassword],
     ["Invalid email", authentication.login.invalidEmail],
   ] as const;
-
   for (const [name, user] of negativeScenarios) {
     test(`${name} should display login error`, async ({ loginPage }) => {
       const loginUser = structuredClone(user);

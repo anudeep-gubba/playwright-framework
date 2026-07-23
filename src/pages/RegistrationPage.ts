@@ -48,11 +48,9 @@ export class RegistrationPage extends BasePage {
     // Initialize if the page has a terms/age checkbox
     // this.ageCheckbox = new CheckBox(page.locator(RegistrationPageLocators.ageCheckbox));
   }
-
   async navigate(): Promise<void> {
     await super.navigate(AppRoutes.REGISTER);
   }
-
   async register(user: RegistrationUser): Promise<void> {
     await AllureHelper.step("Enter First Name", async () => {
       await this.firstName.enter(user.firstName);

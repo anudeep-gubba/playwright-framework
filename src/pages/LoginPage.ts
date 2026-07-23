@@ -26,11 +26,9 @@ export class LoginPage extends BasePage {
       page.locator(LoginPageLocators.loginErrorMessage),
     );
   }
-
   async navigate(): Promise<void> {
     await super.navigate(AppRoutes.LOGIN);
   }
-
   async login(user: User): Promise<void> {
     await AllureHelper.step("Enter Email", async () => {
       await this.email.enter(user.email);
@@ -44,11 +42,9 @@ export class LoginPage extends BasePage {
       await this.loginButton.click();
     });
   }
-
   async waitForLoad(): Promise<void> {
     await this.page.waitForLoadState("networkidle");
   }
-
   async getErrorMessage(): Promise<string> {
     return this.errorMessage.text();
   }

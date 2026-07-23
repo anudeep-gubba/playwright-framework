@@ -45,5 +45,24 @@
       "email": "john@test.com",
       "password": ""
     }
+  },
+  "apiLogin": {
+    "validUser": {
+      "email": "automationtesterag@gmail.com",
+      "password": "passw0rd"
+    }
+  },
+  "apiEvent": {
+    "createEvent": {
+      "title": "Tech Summit 2027",
+      "description": "A premier technology conference bringing together industry leaders.",
+      "category": "Conference",
+      "venue": "Bangalore International Centre",
+      "city": "Bangalore",
+      "eventDate": "2027-06-15T09:00:00.000Z",
+      "price": 1500,
+      "totalSeats": 500,
+      "imageUrl": "https://example.com/images/tech-summit.jpg"
+    }
   }
 }
