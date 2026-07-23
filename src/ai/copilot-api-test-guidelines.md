@@ -24,16 +24,26 @@ Use these guidelines when generating new API tests, service classes, request/res
    - Define reusable service classes in `src/api/services/*`.
    - Encapsulate HTTP method details in `src/api/client/ApiEngine.ts`.
    - Keep request logic separate from tests.
+   - Never bypass the service layer by calling `request.newContext()` or raw `APIRequestContext` methods directly inside API tests.
 
 2. Keep API tests declarative.
    - Create tests under `tests/api/` with clear `test.describe` structure.
    - Use service methods like `api.service("auth").login(...)` and `api.service("event").createEvent(...)`.
    - Keep assertions in tests and business logic in service or helper classes.
+   - Use the shared fixture and `api` object from `src/api/fixtures/apiTest.ts` for setup, auth, and scenario context.
 
 3. Use typed request and response models.
    - Define request payloads in `src/api/requests/*.ts`.
    - Define response shapes in `src/api/responses/*.ts`.
    - Use these types in services and tests for type safety.
+
+### Hard rules / anti-patterns
+
+- Do not create new API tests as `.spec.js`; this repository standard is `tests/api/*.spec.ts`.
+- Do not hand-write endpoint URLs or HTTP headers in tests when a service method already exists.
+- If a flow needs `create`, `update`, or `delete`, extend the service class first, then call the new method from the test.
+- Store reusable auth and resource values in `api.setContextValue(...)` and retrieve them with `api.getContextValue(...)` instead of local variables that are not shared across steps.
+- Centralize payload templates in test data files and load them with `TestData.load<T>("filename")` rather than embedding ad-hoc JSON directly in the test.
 
 4. Use centralized test data.
    - Store API payload templates in `src/data/datasets/json/*.json` or `src/data/datasets/yaml/*.yaml`.
@@ -66,6 +76,7 @@ Use these guidelines when generating new API tests, service classes, request/res
 ## Example
 
 For a login + event creation flow:
+
 - `src/api/requests/LoginRequest.ts`
 - `src/api/responses/LoginResponse.ts`
 - `src/api/services/AuthenticationService.ts`
@@ -78,6 +89,7 @@ For a login + event creation flow:
 ## Prompt instructions for Copilot
 
 When generating a new API test or service class, follow this structure:
+
 - Determine the API endpoint and the scenario to validate.
 - Create request/response models first.
 - Create or extend service methods to represent endpoint behavior.

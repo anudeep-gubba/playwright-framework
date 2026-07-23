@@ -9,5 +9,7 @@ export const API_ENDPOINTS = {
 
   EVENT: {
     CREATE: "/api/events",
+    UPDATE: (id: number) => `/api/events/${id}`,
+    DELETE: (id: number) => `/api/events/${id}`,
   },
 } as const;

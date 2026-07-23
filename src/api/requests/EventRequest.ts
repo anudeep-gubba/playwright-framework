@@ -9,3 +9,5 @@ export interface CreateEventRequest {
   totalSeats: number;
   imageUrl: string;
 }
+
+export type UpdateEventRequest = CreateEventRequest;
