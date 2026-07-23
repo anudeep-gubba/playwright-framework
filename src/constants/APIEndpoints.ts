@@ -1,5 +1,13 @@
-export const Endpoints = Object.freeze({
-  LOGIN: "/auth/login",
-  REGISTER: "/auth/register",
-  PROFILE: "/user/profile",
-});
+export const API_ENDPOINTS = {
+  AUTH: {
+    LOGIN: "/api/auth/login",
+  },
+
+  USER: {
+    PROFILE: "/api/ecom/user/get-profile",
+  },
+
+  EVENT: {
+    CREATE: "/api/events",
+  },
+} as const;

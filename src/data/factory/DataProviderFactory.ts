@@ -15,7 +15,6 @@ export class DataProviderFactory {
 
   static create(): IDataProvider {
     const Provider = this.providers[ENV.TEST_DATA_FORMAT];
-
     if (!Provider) {
       throw new Error(`Unsupported TEST_DATA_FORMAT: ${ENV.TEST_DATA_FORMAT}`);
     }

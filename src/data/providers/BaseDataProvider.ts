@@ -15,7 +15,6 @@ export abstract class BaseDataProvider implements IDataProvider {
     const cacheKey = `${ENV.TEST_DATA_FORMAT}:${fileName}`;
 
     const cached = this.cache.get(cacheKey);
-
     if (cached) {
       return cached as T;
     }
@@ -28,7 +27,6 @@ export abstract class BaseDataProvider implements IDataProvider {
 
     return data;
   }
-
   private resolveFilePath(fileName: string): string {
     const filePath = path.resolve(
       process.cwd(),
@@ -38,7 +36,6 @@ export abstract class BaseDataProvider implements IDataProvider {
       ENV.TEST_DATA_FORMAT,
       `${fileName}.${this.extension}`,
     );
-
     if (!fs.existsSync(filePath)) {
       throw new Error(`Test data file not found: ${filePath}`);
     }
