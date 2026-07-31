@@ -8,7 +8,6 @@ export * from "./context/ApiScenarioContext";
 export * from "./services/BaseService";
 export * from "./services/AuthenticationService";
 export * from "./services/EventService";
-export * from "./services/UserService";
 
 export * from "./ApiFacade";
 
