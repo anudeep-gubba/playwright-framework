@@ -80,16 +80,21 @@ npm install
 ## Detailed File and Folder Descriptions
 
 ### `config/`
+
 - `envLoader.ts`: Loads environment variables from `config/environments/*.env` and exposes them through `ENV`.
 - `global.setup.ts`: Runs once before all Playwright tests to create folders and initialize global state.
 - `environments/`: Stores environment configuration files such as `qa.env` and `dev.env`.
   - Set `BASE_URL`, `API_BASE_URL`, `TEST_DATA_FORMAT`, and browser/execution options here.
 
 ### `src/ai/`
-- Contains guidance documents for Copilot or prompt-based generation.
+
+- Contains prompt guidance documents for Copilot or prompt-based generation.
+- Prefer directory-based discovery of the relevant markdown file in this folder instead of hardcoding one exact filename.
+- If a specific `*guidelines*.md` file is missing, fall back to the repository conventions in `tests/`, `src/pages/`, `src/api/`, and `src/components/`.
 - Use these files to standardize how the framework should generate UI tests and API tests.
 
 ### `src/api/`
+
 - `client/`: Core HTTP engine, request/response handling, retry policy, and API execution logic.
 - `auth/`: Token management for authenticated API requests.
 - `fixtures/`: API-specific fixture setup so API tests run in an isolated API context.
@@ -100,15 +105,18 @@ npm install
 - `context/`: Shared API scenario context storage.
 
 ### `src/components/`
+
 - Reusable UI component wrappers and shared control abstractions.
 - Use components for button, input, checkbox, and label interactions.
 - Encourages consistency across page objects.
 
 ### `src/constants/`
+
 - Stores constant values used across the framework.
 - Example: `APIEndpoints.ts` centralizes endpoint paths.
 
 ### `src/data/`
+
 - `datasets/`: Raw test data files in JSON or YAML format.
   - `json/`: JSON datasets.
   - `yaml/`: YAML datasets, supported via `TEST_DATA_FORMAT`.
@@ -117,39 +125,48 @@ npm install
 - `TestData.ts`: Unified API for loading data files in tests.
 
 ### `src/fixtures/`
+
 - Playwright fixture definitions for UI tests.
 - Encapsulates custom fixture behavior and shared setup.
 
 ### `src/hooks/`
+
 - Test lifecycle hooks such as `beforeEach` and `afterEach`.
 - Useful for logging, cleanup, and global test setup.
 
 ### `src/locators/`
+
 - Shared locator definitions for selectors used across multiple pages.
 - Helps keep selectors centralized when needed.
 
 ### `src/pages/`
+
 - Page object classes for UI screens and flows.
 - Encapsulate navigation, element actions, and page-level behavior.
 
 ### `src/reporting/`
+
 - Helpers for attaching request/response logs to Playwright reports.
 - Includes utilities for rich report attachments.
 
 ### `src/utils/`
+
 - Shared utilities such as logger, date helpers, and common actions.
 - `Logger.ts` is used across UI and API layers for consistent logging.
 
 ### `src/validators/`
+
 - Optional assertion helpers for UI validation.
 - Useful for reusable pass/fail checks inside specs.
 
 ### `tests/`
+
 - `api/`: API test specifications and flows.
 - `ui/`: UI test specifications for end-to-end browser scenarios.
 - `authentication/`: Existing authentication-focused tests.
 
 ### Root files
+
 - `package.json`: Project scripts and dependencies.
 - `playwright.config.ts`: Playwright test runner configuration.
 - `Readme.md`: Project documentation and usage guide.
@@ -280,7 +297,7 @@ LOG_LEVEL=debug npm run api
 
 - Keep UI and API flows separate to reduce coupling.
 - Use typed models and data-driven tests for stability.
-- Use the Copilot guideline files in `src/ai/` if you want to generate UI or API tests from a prompt.
+- Use the Copilot guideline files under `src/ai/` by resolving the relevant `*guidelines*.md` document from that folder, rather than assuming one hardcoded filename. If the prompt file is absent, infer the test type from the repository structure and follow the stable source folders instead.
 
 ---
 
