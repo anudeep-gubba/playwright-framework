@@ -1,7 +1,6 @@
 export interface RetryPolicyOptions {
   maxRetries?: number;
   retryDelay?: number;
-  retryOnStatusCodes?: number[];
 }
 
 export class RetryPolicy {

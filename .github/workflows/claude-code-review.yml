@@ -1,0 +1,48 @@
+name: Claude Code Review
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+
+concurrency:
+  group: claude-review-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  claude-review:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      pull-requests: write
+      issues: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Run Claude code review
+        uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          direct_prompt: |
+            Review this pull request against the conventions in CLAUDE.md at the repo root:
+            - UI and API test layers must stay separate (no cross-importing page objects/services).
+            - UI: page objects (src/pages) extend BasePage and must not contain assertions or
+              business rules — those belong in src/validators. Actions should be built from
+              src/components wrappers, not raw page.locator() calls.
+            - API: tests must go through api.service("<name>") — never request.newContext() or
+              raw HTTP calls. Endpoint strings belong in src/constants, not hardcoded in tests
+              or services.
+            - New test data must be added for every supported dataset format (JSON, YAML, CSV,
+              Excel) under src/data/datasets/, with a typed model in src/data/models/.
+            - Flag missing typecheck/test coverage for the change, hardcoded values that belong
+              in constants/test data, and any assertions/business logic in the wrong layer.
+
+            Post the review as a single PR comment summarizing findings, ranked most important
+            first. If the change looks correct and follows these conventions, say so briefly
+            instead of inventing issues.
+          allowed_tools: "Read,Grep,Glob"

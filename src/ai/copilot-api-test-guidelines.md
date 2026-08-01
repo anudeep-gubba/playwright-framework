@@ -14,15 +14,17 @@ Use these guidelines when generating new API tests, service classes, request/res
 - API services: `src/api/services/*.ts`
 - Request payload models: `src/api/requests/*.ts`
 - Response models: `src/api/responses/*.ts`
+- Endpoint/constants files: `src/constants/*.ts`
 - Shared API utilities: `src/api/*` and `src/utils/*`
 - Test data models: `src/data/models/*.ts`
-- Test data sets: `src/data/datasets/json/*.json` or `src/data/datasets/yaml/*.yaml`
+- Test data sets: `src/data/datasets/{json,yaml,csv,excel}/*` (same logical dataset in every supported format; CSV/Excel use flat `key,value,type` rows — see below)
 
 ## Standards for API test generation
 
 1. Use a service-based API layer.
    - Define reusable service classes in `src/api/services/*`.
    - Encapsulate HTTP method details in `src/api/client/ApiEngine.ts`.
+   - Keep endpoint paths centralized in `src/constants/*.ts` such as `APIEndpoints.ts`.
    - Keep request logic separate from tests.
    - Never bypass the service layer by calling `request.newContext()` or raw `APIRequestContext` methods directly inside API tests.
 
@@ -46,7 +48,8 @@ Use these guidelines when generating new API tests, service classes, request/res
 - Centralize payload templates in test data files and load them with `TestData.load<T>("filename")` rather than embedding ad-hoc JSON directly in the test.
 
 4. Use centralized test data.
-   - Store API payload templates in `src/data/datasets/json/*.json` or `src/data/datasets/yaml/*.yaml`.
+   - Store API payload templates in `src/data/datasets/{json,yaml,csv,excel}/*` — add the file for every supported format the project uses.
+   - JSON/YAML hold the nested structure directly. CSV/Excel use flat `key,value,type` rows instead (dot-path `key`, e.g. `apiEvent.createEvent.price`; optional `type` of `string`|`number`|`boolean`, default `string` — set it explicitly for numeric fields like `price` or `totalSeats`).
    - Load data with `TestData.load<T>("filename")`.
    - Map payloads to typed models where possible.
 
@@ -68,23 +71,25 @@ Use these guidelines when generating new API tests, service classes, request/res
 ## What to generate when adding a new API flow
 
 1. Add request and response models for the new endpoint.
-2. Add a new service method in `src/api/services/<ServiceName>Service.ts`.
-3. Add or update test data in `src/data/datasets/json/*.json` or `src/data/datasets/yaml/*.yaml`.
-4. Implement a new test in `tests/api/<feature>.spec.ts`.
-5. Use the existing API fixture to keep test setup and auth handling consistent.
+2. Add or update endpoint constants in `src/constants/*.ts` such as `APIEndpoints.ts`.
+3. Add a new service method in `src/api/services/<ServiceName>Service.ts`.
+4. Add or update test data in `src/data/datasets/{json,yaml,csv,excel}/*` (same dataset in every supported format).
+5. Implement a new test in `tests/api/<feature>.spec.ts`.
+6. Use the existing API fixture to keep test setup and auth handling consistent.
 
 ## Example
 
-For a login + event creation flow:
+Use [example-api-code.md](example-api-code.md) as the canonical reference contract for API generation in this repository. It shows the expected service-based structure for a login + event creation flow, including request/response models, endpoint constants, services, datasets, and the final test shape.
+
+The example contract maps to the repository layout below:
 
 - `src/api/requests/LoginRequest.ts`
 - `src/api/responses/LoginResponse.ts`
+- `src/constants/APIEndpoints.ts`
 - `src/api/services/AuthenticationService.ts`
 - `src/api/services/EventService.ts`
-- `src/api/fixtures/apiFixture.ts`
-- `src/data/models/AuthenticationData.ts`
-- `src/data/datasets/json/authentication.json`
-- `tests/api/login.spec.ts`
+- `src/data/datasets/json/authentication.json` (and its `yaml`/`csv`/`excel` counterparts)
+- `tests/api/authentication.spec.ts`
 
 ## Prompt instructions for Copilot
 
@@ -96,7 +101,9 @@ When generating a new API test or service class, follow this structure:
 - Keep tests readable and data-driven.
 - Use existing fixtures for setup and token management.
 - Keep API generation aligned with the file locations above.
+- Use [example-api-code.md](example-api-code.md) as the concrete shape reference when the generated flow needs a full implementation pattern.
+- If this file is missing or renamed in another project, do not fail the prompt. Discover the relevant `*api*guidelines*.md` document under `src/ai/` or fall back to the stable repository conventions in `tests/api/`, `src/api/`, and `src/data/`.
 
 ---
 
-Use this file as the canonical guideline for new API automation generation in this repository.
+Use the relevant guideline file in `src/ai/` as the canonical source for new API automation generation in this repository.

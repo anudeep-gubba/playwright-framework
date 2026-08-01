@@ -1,0 +1,21 @@
+key,value,type
+login.validUser.email,automationtesterag@gmail.com,string
+login.validUser.password,passw0rd,string
+event.createEvent.title,Tech Summit 2026,string
+event.createEvent.description,A premier technology conference.,string
+event.createEvent.category,Conference,string
+event.createEvent.venue,Bangalore International Centre,string
+event.createEvent.city,Bangalore,string
+event.createEvent.eventDate,2027-06-15T09:00:00.000Z,string
+event.createEvent.price,1500,number
+event.createEvent.totalSeats,500,number
+event.createEvent.imageUrl,https://example.com/banner.jpg,string
+event.updateEvent.title,Tech Summit 2027,string
+event.updateEvent.description,Updated premier technology conference.,string
+event.updateEvent.category,Conference,string
+event.updateEvent.venue,Bangalore International Centre,string
+event.updateEvent.city,Bangalore,string
+event.updateEvent.eventDate,2027-06-15T09:00:00.000Z,string
+event.updateEvent.price,1600,number
+event.updateEvent.totalSeats,500,number
+event.updateEvent.imageUrl,https://example.com/updated-banner.jpg,string

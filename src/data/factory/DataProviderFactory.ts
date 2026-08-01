@@ -3,6 +3,8 @@ import { ENV } from "../../../config/envLoader";
 import { IDataProvider } from "../providers/IDataProvider";
 import { JsonProvider } from "../providers/JsonProvider";
 import { YamlProvider } from "../providers/YamlProvider";
+import { CsvProvider } from "../providers/CsvProvider";
+import { ExcelProvider } from "../providers/ExcelProvider";
 
 type ProviderConstructor = new () => IDataProvider;
 
@@ -11,6 +13,10 @@ export class DataProviderFactory {
     json: JsonProvider,
 
     yaml: YamlProvider,
+
+    csv: CsvProvider,
+
+    excel: ExcelProvider,
   };
 
   static create(): IDataProvider {

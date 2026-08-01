@@ -1,4 +1,4 @@
-import { test as base, expect, request } from "@playwright/test";
+import { test as base, expect } from "@playwright/test";
 import { createApiFixture, ApiFixture } from "./apiFixture";
 
 export const test = base.extend<ApiFixture>({
