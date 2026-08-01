@@ -309,6 +309,23 @@ login:
     password: Password123
 ```
 
+### CSV and Excel formats (`src/data/datasets/csv/`, `src/data/datasets/excel/`)
+
+File: `authentication.csv` (and the equivalent `authentication.xlsx` sheet with the same header/rows)
+Purpose: same dataset as above, expressed as flat `key,value,type` rows instead of nested JSON/YAML — `key` is a dot-path into the object, `type` is optional (`string` default, `number`, `boolean`).
+
+```csv
+key,value,type
+login.validUser.email,testaccountag@gmail.com,string
+login.validUser.password,Test@1234,string
+login.invalidPassword.email,valid@test.com,string
+login.invalidPassword.password,WrongPassword,string
+login.invalidEmail.email,invalid@test.com,string
+login.invalidEmail.password,Password123,string
+```
+
+`CsvProvider`/`ExcelProvider` rebuild this into the identical nested object via `unflattenRows` (`src/data/utils/tabularData.ts`), so `AuthenticationData` and the spec below work unchanged regardless of `TEST_DATA_FORMAT`.
+
 ## What a consumer should add
 
 When using this framework for a new application, keep the same folder contract and replace only the application-specific UI behavior.
@@ -319,5 +336,5 @@ When using this framework for a new application, keep the same folder contract a
 - Add fixture support in `src/fixtures/`
 - Add result validators in `src/validators/`
 - Add test data models in `src/data/models/`
-- Add dataset JSON/YAML files in `src/data/datasets/`
+- Add dataset files for every supported format (JSON, YAML, CSV, Excel) in `src/data/datasets/`
 - Add UI scenario tests under the current test naming convention in `tests/`

@@ -17,7 +17,7 @@ Use these guidelines when generating new API tests, service classes, request/res
 - Endpoint/constants files: `src/constants/*.ts`
 - Shared API utilities: `src/api/*` and `src/utils/*`
 - Test data models: `src/data/models/*.ts`
-- Test data sets: `src/data/datasets/json/*.json` or `src/data/datasets/yaml/*.yaml`
+- Test data sets: `src/data/datasets/{json,yaml,csv,excel}/*` (same logical dataset in every supported format; CSV/Excel use flat `key,value,type` rows — see below)
 
 ## Standards for API test generation
 
@@ -48,7 +48,8 @@ Use these guidelines when generating new API tests, service classes, request/res
 - Centralize payload templates in test data files and load them with `TestData.load<T>("filename")` rather than embedding ad-hoc JSON directly in the test.
 
 4. Use centralized test data.
-   - Store API payload templates in `src/data/datasets/json/*.json` or `src/data/datasets/yaml/*.yaml`.
+   - Store API payload templates in `src/data/datasets/{json,yaml,csv,excel}/*` — add the file for every supported format the project uses.
+   - JSON/YAML hold the nested structure directly. CSV/Excel use flat `key,value,type` rows instead (dot-path `key`, e.g. `apiEvent.createEvent.price`; optional `type` of `string`|`number`|`boolean`, default `string` — set it explicitly for numeric fields like `price` or `totalSeats`).
    - Load data with `TestData.load<T>("filename")`.
    - Map payloads to typed models where possible.
 
@@ -72,7 +73,7 @@ Use these guidelines when generating new API tests, service classes, request/res
 1. Add request and response models for the new endpoint.
 2. Add or update endpoint constants in `src/constants/*.ts` such as `APIEndpoints.ts`.
 3. Add a new service method in `src/api/services/<ServiceName>Service.ts`.
-4. Add or update test data in `src/data/datasets/json/*.json` or `src/data/datasets/yaml/*.yaml`.
+4. Add or update test data in `src/data/datasets/{json,yaml,csv,excel}/*` (same dataset in every supported format).
 5. Implement a new test in `tests/api/<feature>.spec.ts`.
 6. Use the existing API fixture to keep test setup and auth handling consistent.
 
@@ -87,7 +88,7 @@ The example contract maps to the repository layout below:
 - `src/constants/APIEndpoints.ts`
 - `src/api/services/AuthenticationService.ts`
 - `src/api/services/EventService.ts`
-- `src/data/datasets/json/authentication.json`
+- `src/data/datasets/json/authentication.json` (and its `yaml`/`csv`/`excel` counterparts)
 - `tests/api/authentication.spec.ts`
 
 ## Prompt instructions for Copilot

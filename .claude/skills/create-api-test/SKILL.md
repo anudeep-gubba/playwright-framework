@@ -24,14 +24,14 @@ Scaffold a new API test flow for this Playwright framework, following the servic
 - Response models: `src/api/responses/*.ts`
 - Endpoint constants: `src/constants/APIEndpoints.ts`
 - Test data models: `src/data/models/*.ts`
-- Test data sets: `src/data/datasets/json/*.json` **and** `src/data/datasets/yaml/*.yaml` (same logical dataset in both)
+- Test data sets: `src/data/datasets/{json,yaml,csv,excel}/*` (same logical dataset in every supported format). JSON/YAML hold the nested structure directly; CSV/Excel use flat `key,value,type` rows (dot-path `key`, optional `type` of `string`|`number`|`boolean`, default `string` — set it explicitly for numeric fields).
 
 ## What to generate for a new API flow
 
 1. Request/response models for the new endpoint in `src/api/requests/` / `src/api/responses/`.
 2. Endpoint constant added to `src/constants/APIEndpoints.ts` (never hardcode endpoint strings in a test).
 3. A new or extended service method in `src/api/services/<ServiceName>Service.ts`, registered in `src/api/services/index.ts`.
-4. Test data added to `src/data/datasets/json/apiData.json` **and** `src/data/datasets/yaml/apiData.yaml`, typed in `src/data/models/ApiData.ts`.
+4. Test data added to `src/data/datasets/{json,yaml,csv,excel}/apiData.*` (every supported format), typed in `src/data/models/ApiData.ts`.
 5. A test in `tests/api/<feature>.spec.ts` using `src/api/fixtures/apiTest.ts`.
 
 ## Hard rules / anti-patterns
@@ -50,6 +50,6 @@ Scaffold a new API test flow for this Playwright framework, following the servic
 2. Add typed request/response models.
 3. Add/update the endpoint constant.
 4. Add or extend the service method.
-5. Add test data (JSON + YAML) and update the data model if new fields are introduced.
+5. Add test data (JSON, YAML, CSV, and Excel) and update the data model if new fields are introduced.
 6. Write the spec in `tests/api/<feature>.spec.ts`, tagging smoke-critical tests per `TestTags`.
 7. Run `npm run typecheck` and the new spec (`npx playwright test tests/api/<feature>.spec.ts`) to confirm it passes before reporting done.

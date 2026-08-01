@@ -30,7 +30,7 @@ TEST_ENV=dev npm run ui
 LOG_LEVEL=debug npm run api
 ```
 
-Environment files live in `config/environments/<name>.env` (`qa`, `dev`) and are loaded by `config/envLoader.ts` into the frozen `ENV` object, keyed off `process.env.TEST_ENV`. Required keys (`BASE_URL`, `API_BASE_URL`, `TEST_DATA_FORMAT`) throw at load time if missing. `TEST_DATA_FORMAT` (`json`|`yaml`) selects which dataset provider `TestData.load()` uses.
+Environment files live in `config/environments/<name>.env` (`qa`, `dev`) and are loaded by `config/envLoader.ts` into the frozen `ENV` object, keyed off `process.env.TEST_ENV`. Required keys (`BASE_URL`, `API_BASE_URL`, `TEST_DATA_FORMAT`) throw at load time if missing. `TEST_DATA_FORMAT` (`json`|`yaml`|`csv`|`excel`) selects which dataset provider `TestData.load()` uses.
 
 CI (`.github/workflows/playwright-tests.yml`) runs on every push/PR: `npm ci` → `npm run typecheck` → install chromium → `npm run test` (with `TEST_ENV=qa`, `HEADLESS=true`), then uploads the HTML report and test-results as artifacts.
 
@@ -64,13 +64,15 @@ Flow: `tests/api/*.spec.ts` → `src/api/fixtures/apiTest.ts` (extends `test` wi
 
 ### Test data
 
-`src/data/TestData.ts` is the single entry point: `TestData.load<T>("fileName")` picks a provider via `src/data/factory/DataProviderFactory.ts`, keyed on `ENV.TEST_DATA_FORMAT`. Providers (`JsonProvider`/`YamlProvider`, both implementing `IDataProvider`) read from `src/data/datasets/json/*.json` or `src/data/datasets/yaml/*.yaml` respectively — the same logical dataset must exist in both formats.
+`src/data/TestData.ts` is the single entry point: `TestData.load<T>("fileName")` picks a provider via `src/data/factory/DataProviderFactory.ts`, keyed on `ENV.TEST_DATA_FORMAT`. Providers (`JsonProvider`/`YamlProvider`/`CsvProvider`/`ExcelProvider`, all implementing `IDataProvider`) read from `src/data/datasets/<format>/*.<ext>` (`json`, `yaml`, `csv`, `excel` → `.xlsx`) — the same logical dataset must exist in every format.
+
+`JsonProvider`/`YamlProvider` parse the file's native nested structure directly. `CsvProvider`/`ExcelProvider` instead read flat `key,value,type` rows (header required) — `key` is a dot-path (e.g. `checkout.payment.cvv`), `type` is optional and one of `string` (default) | `number` | `boolean`. Both are rebuilt into the same nested shape via `unflattenRows` in `src/data/utils/tabularData.ts`, so all four formats produce identical objects and the same data models work unchanged. Always set an explicit `type` for non-string values (e.g. `price,1500,number`) — CSV/Excel values are otherwise treated as strings, unlike JSON/YAML where numeric/boolean types are implicit.
 
 Current datasets/models:
-- `uiData.{json,yaml}` + `src/data/models/UiData.ts` — used by UI specs (e.g. login users).
-- `apiData.{json,yaml}` + `src/data/models/ApiData.ts` — used by API specs (login + event payloads); reuses request types like `CreateEventRequest` from `src/api/requests/EventRequest.ts` so payload shape stays in sync with the service layer.
+- `uiData.{json,yaml,csv,xlsx}` + `src/data/models/UiData.ts` — used by UI specs (e.g. login users).
+- `apiData.{json,yaml,csv,xlsx}` + `src/data/models/ApiData.ts` — used by API specs (login + event payloads); reuses request types like `CreateEventRequest` from `src/api/requests/EventRequest.ts` so payload shape stays in sync with the service layer.
 
-Both data models reuse the shared domain type `src/models/User.ts` for credentials. When adding a new dataset, add the JSON *and* YAML file, add a typed model in `src/data/models/`, and export it from `src/data/models/index.ts`.
+Both data models reuse the shared domain type `src/models/User.ts` for credentials. When adding a new dataset, add the file for every supported format (JSON, YAML, CSV, Excel), add a typed model in `src/data/models/`, and export it from `src/data/models/index.ts`.
 
 ### Shared building blocks
 

@@ -7,7 +7,7 @@ A hybrid Playwright automation framework that supports separate UI and API test 
 - Separate UI and API test layers for maintainability
 - Reusable page objects and component wrappers
 - Service-based API layer with token management
-- Centralized test data with JSON/YAML support
+- Centralized test data with JSON/YAML/CSV/Excel support
 - Built-in Playwright reports, Allure integration, and logging
 - Easy extension for new flows with minimal file changes
 
@@ -36,7 +36,7 @@ npm install
 3. Configure environment variables in `config/environments/*.env`.
    - `BASE_URL` for UI tests
    - `API_BASE_URL` for API tests
-   - `TEST_DATA_FORMAT` set to `json` or `yaml`
+   - `TEST_DATA_FORMAT` set to `json`, `yaml`, `csv`, or `excel`
 
 ## Project Structure
 
@@ -52,7 +52,7 @@ npm install
 │   ├── components/          # Reusable UI component wrappers
 │   ├── constants/           # Global constants such as API endpoints
 │   ├── data/                # Test data models, datasets, and provider logic
-│   │   ├── datasets/        # JSON/YAML test payload files
+│   │   ├── datasets/        # JSON/YAML/CSV/Excel test payload files
 │   │   ├── factory/         # Data provider factory
 │   │   ├── models/          # Type definitions for test data
 │   │   └── TestData.ts      # Central loader for test data
@@ -117,11 +117,14 @@ npm install
 
 ### `src/data/`
 
-- `datasets/`: Raw test data files in JSON or YAML format.
-  - `json/`: JSON datasets.
-  - `yaml/`: YAML datasets, supported via `TEST_DATA_FORMAT`.
+- `datasets/`: Raw test data files, one subfolder per supported format, selected via `TEST_DATA_FORMAT`.
+  - `json/`: JSON datasets (native nested structure).
+  - `yaml/`: YAML datasets (native nested structure).
+  - `csv/`: CSV datasets — flat `key,value,type` rows (dot-path `key`, optional `type` of `string`|`number`|`boolean`, default `string`).
+  - `excel/`: Excel datasets (`.xlsx`) — same flat `key,value,type` row convention as CSV, one row per sheet row.
 - `models/`: Type-safe interfaces for data payloads and test data shapes.
-- `factory/`: Data provider factory that selects JSON or YAML provider.
+- `factory/`: Data provider factory that selects the JSON, YAML, CSV, or Excel provider.
+- `utils/tabularData.ts`: Shared helper (`unflattenRows`) that rebuilds the nested object shape from CSV/Excel's flat rows, so all four formats produce identical objects for the same data model.
 - `TestData.ts`: Unified API for loading data files in tests.
 
 ### `src/fixtures/`
@@ -177,6 +180,21 @@ Test data is loaded through `src/data/TestData.ts`, which chooses a provider bas
 
 - JSON data path: `src/data/datasets/json/*.json`
 - YAML data path: `src/data/datasets/yaml/*.yaml`
+- CSV data path: `src/data/datasets/csv/*.csv`
+- Excel data path: `src/data/datasets/excel/*.xlsx`
+
+JSON/YAML files hold the dataset's native nested structure directly. CSV/Excel files instead use flat rows with a header of `key,value,type`:
+
+```csv
+key,value,type
+login.validUser.email,testaccountag@gmail.com,string
+login.validUser.password,Test@1234,string
+checkout.payment.cvv,123,string
+event.createEvent.price,1500,number
+```
+
+- `key` is a dot-path into the resulting object (e.g. `checkout.payment.cvv`).
+- `type` is optional and defaults to `string`; use `number` or `boolean` for non-string fields — otherwise the value is loaded as a string, unlike JSON/YAML where numeric/boolean types are implicit.
 
 Example in a test file:
 
@@ -187,13 +205,13 @@ import { AuthenticationData } from "../../src/data/models/AuthenticationData";
 const authentication = TestData.load<AuthenticationData>("authentication");
 ```
 
-This will load either `authentication.json` or `authentication.yaml` depending on `TEST_DATA_FORMAT`.
+This will load `authentication.json`, `authentication.yaml`, `authentication.csv`, or `authentication.xlsx` depending on `TEST_DATA_FORMAT`.
 
 ## Adding a UI Test
 
 1. Create or update page objects in `src/pages/`.
 2. Add reusable controls in `src/components/` if needed.
-3. Add test data in `src/data/datasets/json/*.json` or `src/data/datasets/yaml/*.yaml`.
+3. Add test data in `src/data/datasets/{json,yaml,csv,excel}/*` (same dataset in every supported format).
 4. Add the test spec in `tests/ui/*.spec.ts`.
 5. Use shared fixtures via `src/fixtures/testFixture.ts`.
 
@@ -202,7 +220,7 @@ This will load either `authentication.json` or `authentication.yaml` depending o
 - `src/pages/MyPage.ts`
 - `src/components/*` (optional reusable controls)
 - `src/data/models/*.ts`
-- `src/data/datasets/json/*.json` or `src/data/datasets/yaml/*.yaml`
+- `src/data/datasets/{json,yaml,csv,excel}/*` (same dataset in every supported format)
 - `tests/ui/my-feature.spec.ts`
 
 ## Adding an API Test
@@ -210,7 +228,7 @@ This will load either `authentication.json` or `authentication.yaml` depending o
 1. Add request models in `src/api/requests/*.ts`.
 2. Add response models in `src/api/responses/*.ts`.
 3. Add or extend service methods in `src/api/services/*.ts`.
-4. Add test data to `src/data/datasets/json/*.json` or `src/data/datasets/yaml/*.yaml`.
+4. Add test data to `src/data/datasets/{json,yaml,csv,excel}/*` (same dataset in every supported format).
 5. Add the API spec in `tests/api/*.spec.ts`.
 
 ### Example Files to Change for a new API flow
@@ -219,7 +237,7 @@ This will load either `authentication.json` or `authentication.yaml` depending o
 - `src/api/responses/NewResponse.ts`
 - `src/api/services/NewService.ts`
 - `src/data/models/*.ts`
-- `src/data/datasets/json/*.json` or `src/data/datasets/yaml/*.yaml`
+- `src/data/datasets/{json,yaml,csv,excel}/*` (same dataset in every supported format)
 - `tests/api/new-flow.spec.ts`
 
 ## Running Tests

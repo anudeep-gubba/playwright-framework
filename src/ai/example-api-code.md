@@ -127,6 +127,22 @@ apiEvent:
     price: 499
 ```
 
+### CSV and Excel formats (`src/data/datasets/csv/`, `src/data/datasets/excel/`)
+
+File: `authentication.csv` (and the equivalent `authentication.xlsx` sheet with the same header/rows)
+Purpose: same dataset as above, expressed as flat `key,value,type` rows instead of nested JSON/YAML — `key` is a dot-path into the object, `type` is optional (`string` default, `number`, `boolean`) and must be set explicitly for non-string fields like `price`.
+
+```csv
+key,value,type
+apiLogin.validUser.email,user@example.com,string
+apiLogin.validUser.password,Password123,string
+apiEvent.createEvent.title,Launch Event,string
+apiEvent.createEvent.city,Hyderabad,string
+apiEvent.createEvent.price,499,number
+```
+
+`CsvProvider`/`ExcelProvider` rebuild this into the identical nested object via `unflattenRows` (`src/data/utils/tabularData.ts`), so the test below works unchanged regardless of `TEST_DATA_FORMAT`.
+
 ## 7. `tests/api/`
 
 File: `authentication.spec.ts`
@@ -183,14 +199,6 @@ When adopting this framework for a new application, the consumer should create t
 - Add response interfaces in `src/api/responses/`
 - Add endpoint constants in `src/constants/APIEndpoints.ts`
 - Add endpoint wrappers in `src/api/services/`
-- Add dataset JSON/YAML files in `src/data/datasets/`
-- Add API scenario tests in `tests/api/`
-- Keep the folder contract stable even when the target application changes
-  When adopting this framework for a new application, the consumer should create the same folder/file pattern and replace only the endpoint-specific logic and payload shapes.
-
-- Add request interfaces in `src/api/requests/`
-- Add response interfaces in `src/api/responses/`
-- Add endpoint constants in `src/constants/APIEndpoints.ts`
-- Add endpoint wrappers in `src/api/services/`
+- Add dataset files for every supported format (JSON, YAML, CSV, Excel) in `src/data/datasets/`
 - Add API scenario tests in `tests/api/`
 - Keep the folder contract stable even when the target application changes

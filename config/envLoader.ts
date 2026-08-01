@@ -1,7 +1,7 @@
 import dotenv from "dotenv";
 import path from "path";
 
-export type TestDataFormat = "json" | "yaml";
+export type TestDataFormat = "json" | "yaml" | "csv" | "excel";
 
 const environment = process.env.TEST_ENV ?? "qa";
 

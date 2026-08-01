@@ -25,7 +25,7 @@ Scaffold a new UI test flow for this Playwright framework, following the Page Ob
 - Shared domain models: `src/models/*.ts`
 - Shared route/app constants: `src/constants/*.ts`
 - Test data models: `src/data/models/*.ts`
-- Test data sets: `src/data/datasets/json/*.json` **and** `src/data/datasets/yaml/*.yaml` (same logical dataset in both)
+- Test data sets: `src/data/datasets/{json,yaml,csv,excel}/*` (same logical dataset in every supported format). JSON/YAML hold the nested structure directly; CSV/Excel use flat `key,value,type` rows (dot-path `key`, optional `type` of `string`|`number`|`boolean`, default `string`).
 
 ## What to generate for a new UI flow
 
@@ -33,7 +33,7 @@ Scaffold a new UI test flow for this Playwright framework, following the Page Ob
 2. Component wrappers in `src/components/` if new reusable elements are needed (extend `BaseComponent`).
 3. Locators in `src/locators/<Page>Locators.ts`, referenced by the page object — never raw `page.locator()` calls scattered in tests.
 4. Routes/constants added to `src/constants/AppRoutes.ts` (or other `src/constants/*.ts`) as needed.
-5. Test data added to `src/data/datasets/json/uiData.json` **and** `src/data/datasets/yaml/uiData.yaml`, typed in `src/data/models/UiData.ts`.
+5. Test data added to `src/data/datasets/{json,yaml,csv,excel}/uiData.*` (every supported format), typed in `src/data/models/UiData.ts`.
 6. Validator methods in `src/validators/<Feature>Validator.ts` for assertions reused across scenarios.
 7. A spec in `tests/<feature>/<feature>.spec.ts` using `src/fixtures/testFixture.ts`.
 
@@ -52,7 +52,7 @@ Scaffold a new UI test flow for this Playwright framework, following the Page Ob
 1. Confirm the target flow, pages involved, and scenarios (success + failure paths) to cover.
 2. Add/update locators, then the page object(s) built on top of them.
 3. Add component wrappers only if the flow needs controls not already covered by `src/components/*`.
-4. Add test data (JSON + YAML) and update the data model if new fields are introduced.
+4. Add test data (JSON, YAML, CSV, and Excel) and update the data model if new fields are introduced.
 5. Add/extend a validator for the scenario's expected outcomes.
 6. Write the spec in `tests/<feature>/<feature>.spec.ts`, tagging smoke-critical tests per `TestTags`.
 7. Run `npm run typecheck` and the new spec (`npx playwright test tests/<feature>/<feature>.spec.ts`) to confirm it passes before reporting done.

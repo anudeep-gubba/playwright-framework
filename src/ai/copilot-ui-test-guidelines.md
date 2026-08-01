@@ -16,7 +16,7 @@ Use these guidelines when generating new UI tests, page objects, component wrapp
 - Shared route and app constants: `src/constants/*.ts`
 - Validators and UI expectations: `src/validators/*.ts`
 - Test data models: `src/data/models/*.ts`
-- Test data sets: `src/data/datasets/json/*.json` or `src/data/datasets/yaml/*.yaml`
+- Test data sets: `src/data/datasets/{json,yaml,csv,excel}/*` (same logical dataset in every supported format; CSV/Excel use flat `key,value,type` rows — see below)
 - Locators: `src/locators/*` or inside page object classes when locator-specific files are not needed
 - Helpers / utils: `src/utils/*`
 
@@ -38,7 +38,8 @@ Use these guidelines when generating new UI tests, page objects, component wrapp
    - Import `src/components` into page objects when building reusable UI actions.
 
 4. Use centralized test data.
-   - Store static test data in `src/data/datasets/json/*.json` or `src/data/datasets/yaml/*.yaml`.
+   - Store static test data in `src/data/datasets/{json,yaml,csv,excel}/*` — add the file for every supported format the project uses.
+   - JSON/YAML hold the nested structure directly. CSV/Excel use flat `key,value,type` rows instead (dot-path `key`, e.g. `login.validUser.email`; optional `type` of `string`|`number`|`boolean`, default `string`).
    - Define type-safe data shapes in `src/data/models/*.ts`.
    - Reuse shared domain types from `src/models/*.ts` when the page object needs request payload contracts.
    - Load data with `TestData.load<T>("filename")`.
@@ -62,7 +63,7 @@ Use these guidelines when generating new UI tests, page objects, component wrapp
 1. Create page classes for each page involved in the scenario.
 2. Add or update component wrappers in `src/components` if reusable elements are needed.
 3. Add or update shared constants in `src/constants/*.ts` for routes or app-level values.
-4. Add test data to `src/data/datasets/json/*.json` or `src/data/datasets/yaml/*.yaml` and corresponding models in `src/data/models/*.ts`.
+4. Add test data to `src/data/datasets/{json,yaml,csv,excel}/*` (same dataset in every supported format) and corresponding models in `src/data/models/*.ts`.
 5. Add or update validators in `src/validators/*.ts` when assertions are reused across scenarios.
 6. Implement the scenario in `tests/ui/<feature>.spec.ts`.
 7. Use the fixture from `src/fixtures/testFixture.ts` to access page instances and environment setup.
