@@ -4,7 +4,6 @@ import { ENV } from "../../../config/envLoader";
 
 import { ApiFacade } from "../ApiFacade";
 import { ApiEngine } from "../client/ApiEngine";
-import { ApiScenarioContext } from "../context/ApiScenarioContext";
 
 import { TokenManager } from "../auth/TokenManager";
 

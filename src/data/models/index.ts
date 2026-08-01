@@ -1,2 +1,2 @@
-export * from "./AuthenticationData";
-export * from "./EventData";
+export * from "./UiData";
+export * from "./ApiData";

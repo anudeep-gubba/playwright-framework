@@ -43,7 +43,7 @@ export class LoginPage extends BasePage {
     });
   }
   async waitForLoad(): Promise<void> {
-    await this.page.waitForLoadState("networkidle");
+    await this.page.waitForURL(/\/dashboard\/dash/);
   }
   async getErrorMessage(): Promise<string> {
     return this.errorMessage.text();

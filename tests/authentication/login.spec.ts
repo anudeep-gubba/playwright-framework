@@ -1,14 +1,14 @@
 import { test } from "../../src/fixtures/testFixture";
 import { TestData } from "../../src/data";
-import { AuthenticationData } from "../../src/data/models/AuthenticationData";
+import { UiData } from "../../src/data/models/UiData";
 import { LoginValidator } from "../../src/validators/LoginValidator";
 
-const authentication = TestData.load<AuthenticationData>("authentication");
+const uiData = TestData.load<UiData>("uiData");
 
 test.describe("Authentication :: Login", () => {
   test.describe("Positive Scenarios", () => {
-    test("Valid user should login successfully", async ({ loginPage }) => {
-      const user = structuredClone(authentication.login.validUser);
+    test("Valid user should login successfully @smoke", async ({ loginPage }) => {
+      const user = structuredClone(uiData.login.validUser);
 
       await loginPage.navigate();
 
@@ -21,8 +21,8 @@ test.describe("Authentication :: Login", () => {
   });
 
   const negativeScenarios = [
-    ["Invalid password", authentication.login.invalidPassword],
-    ["Invalid email", authentication.login.invalidEmail],
+    ["Invalid password", uiData.login.invalidPassword],
+    ["Invalid email", uiData.login.invalidEmail],
   ] as const;
   for (const [name, user] of negativeScenarios) {
     test(`${name} should display login error`, async ({ loginPage }) => {

@@ -1,19 +1,17 @@
 import { getFutureDateIso } from "../../src/utils/DateUtils";
 import { test, expect } from "../../src/api/fixtures/apiTest";
 import { TestData } from "../../src/data";
-import { AuthenticationData } from "../../src/data/models/AuthenticationData";
-import { EventData } from "../../src/data/models/EventData";
+import { ApiData } from "../../src/data/models/ApiData";
 
-const authentication = TestData.load<AuthenticationData>("authentication");
-const eventData = TestData.load<EventData>("event");
+const apiData = TestData.load<ApiData>("apiData");
 
 test.describe("API :: Event CRUD", () => {
   test("should login, create, update and delete an event via API", async ({
     api,
   }) => {
-    const user = authentication.apiLogin.validUser;
+    const user = apiData.login.validUser;
     const createEventPayload = {
-      ...eventData.createEvent,
+      ...apiData.event.createEvent,
       eventDate: getFutureDateIso(2, {
         hours: 9,
         minutes: 0,
@@ -23,7 +21,7 @@ test.describe("API :: Event CRUD", () => {
     };
 
     const updateEventPayload = {
-      ...eventData.updateEvent,
+      ...apiData.event.updateEvent,
       eventDate: getFutureDateIso(2, {
         hours: 9,
         minutes: 0,
