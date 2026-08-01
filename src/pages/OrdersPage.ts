@@ -14,12 +14,16 @@ export class OrdersPage extends BasePage {
   }
 
   async isProductInOrders(productName: string): Promise<boolean> {
-    const count = await this.page
+    const matchingRow = this.page
       .locator(OrdersPageLocators.orderRows)
-      .filter({ has: this.page.locator(OrdersPageLocators.productNameCell, { hasText: productName }) })
-      .count();
+      .filter({ has: this.page.locator(OrdersPageLocators.productNameCell, { hasText: productName }) });
 
-    return count > 0;
+    try {
+      await matchingRow.first().waitFor({ state: "visible" });
+      return true;
+    } catch {
+      return false;
+    }
   }
 
   async getLatestOrderPrice(): Promise<string> {

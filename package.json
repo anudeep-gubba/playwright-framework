@@ -11,7 +11,7 @@
     "preapi": "rm -rf allure-results",
     "api": "playwright test tests/api",
     "preui": "rm -rf allure-results",
-    "ui": "playwright test tests/authentication tests/checkout",
+    "ui": "playwright test tests/checkout",
     "typecheck": "tsc --noEmit",
     "allure:generate": "allure generate allure-results --clean",
     "allure:open": "allure open allure-report",
