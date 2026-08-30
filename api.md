@@ -2,7 +2,8 @@
 
 ```mermaid
 flowchart TD
-    A[Test Spec\n event.spec.ts ] --> B[Playwright Fixture\n apiTest.ts ]
+    A0[Feature File\n event.feature ] --> A[Step Definitions\n event.steps.ts ]
+    A --> B[Playwright Fixture\n apiTest.ts ]
     B --> C[ApiFacade\n ApiFacade.ts ]
 
     C --> D[AuthService\n AuthenticationService.ts ]
@@ -24,11 +25,14 @@ flowchart TD
 
 ### What each file is used for
 
-- `tests/api/event.spec.ts`  
-  Test spec that defines the API workflow: login, create, update, delete.
+- `features/api/event.feature`  
+  Gherkin scenario that describes the API workflow: login, create, update, delete — one `Given`/`When`/`Then` line per step.
+
+- `src/bdd/steps/api/event.steps.ts`  
+  Step definitions implementing the feature file, built with `createBdd(test)` from `playwright-bdd`; `playwright-bdd`'s `bddgen` generates the actual Playwright test from this + the feature file into `.features-gen/api/event.feature.spec.js` (gitignored).
 
 - `src/api/fixtures/apiTest.ts`  
-  Custom Playwright fixture that injects the `api` object into the test context.
+  Custom Playwright fixture (extended from `playwright-bdd`'s `test`, not `@playwright/test`'s directly) that injects the `api` object into the test context, plus the shared lifecycle-logging auto-fixture.
 
 - `src/api/fixtures/apiFixture.ts`  
   Creates the request context, token manager, engine, and facade for every API test.

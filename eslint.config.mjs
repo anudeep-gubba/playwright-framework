@@ -1,5 +1,4 @@
 import js from "@eslint/js";
-import playwright from "eslint-plugin-playwright";
 
 export default [
   {
@@ -10,6 +9,7 @@ export default [
       "playwright-report/**",
       "test-results/**",
       "logs/**",
+      ".features-gen/**",
     ],
   },
   {
@@ -49,17 +49,6 @@ export default [
       eqeqeq: ["error", "smart"],
       "no-duplicate-imports": "error",
       "no-console": "warn",
-    },
-  },
-  {
-    files: ["tests/**/*.ts"],
-    ...playwright.configs["flat/recommended"],
-    rules: {
-      ...playwright.configs["flat/recommended"].rules,
-      // Assertions in this framework are centralized in src/validators/*.ts (see CLAUDE.md)
-      // and called as e.g. `LoginValidator.expectLoginSuccess(...)` — the rule only sees
-      // the bare `expect(...)` call by default, so teach it this project's naming convention.
-      "playwright/expect-expect": ["warn", { assertFunctionPatterns: ["^expect"] }],
     },
   },
 ];

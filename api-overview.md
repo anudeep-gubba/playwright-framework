@@ -6,33 +6,34 @@ This document explains the API execution flow first, and then describes the impo
 
 ## 1. API execution flow: where the test picks what
 
-The API flow in this framework starts from the test file and then moves through the framework layer by layer.
+The API flow in this framework is written BDD-style and starts from a Gherkin `.feature` file, gets turned into a native Playwright test by `playwright-bdd`, and then moves through the framework layer by layer.
 
-### Step 1: Playwright picks the test file
+### Step 1: playwright-bdd generates the test file from the feature + steps
 
-The test discovery is controlled by [playwright.config.ts](playwright.config.ts).
+Test discovery is controlled by [playwright.config.ts](playwright.config.ts), which calls `defineBddConfig({ features: "features/**/*.feature", steps: [...], featuresRoot: "features" })` and uses the returned path as `testDir`.
 
 Important settings:
 
-- `testDir: "./tests"` → Playwright looks inside the `tests` folder
-- `testMatch: "**/*.spec.ts"` → it runs only `.spec.ts` files
+- `features: "features/**/*.feature"` → every `.feature` file becomes one or more generated tests
+- `steps: ["src/bdd/steps/**/*.steps.ts", "src/fixtures/testFixture.ts", "src/api/fixtures/apiTest.ts"]` → step definitions, plus the two fixture files bddgen needs to resolve which `test` instance (and so which fixtures) each scenario should import
 - `use.baseURL` → application base URL is loaded from environment config
 
-So the test file [tests/api/event.spec.ts](tests/api/event.spec.ts) is found from the Playwright config.
+So [features/api/event.feature](features/api/event.feature) (steps implemented in [src/bdd/steps/api/event.steps.ts](src/bdd/steps/api/event.steps.ts)) is turned into `.features-gen/api/event.feature.spec.js` (gitignored) by `npm run bddgen`, and that generated file is what Playwright actually runs.
 
 ### Step 2: The test command comes from the package scripts
 
 In [package.json](package.json), the API test run is driven by:
 
-- `npm run api` → `playwright test tests/api`
+- `npm run bddgen` → regenerates `.features-gen/` from `features/**/*.feature` + `src/bdd/steps/**/*.steps.ts` (also runs automatically via the `preapi`/`pretest`/etc. npm hooks)
+- `npm run api` → `playwright test .features-gen/api`
 
-This means the API tests are executed from the `tests/api` directory.
+This means the API tests are generated from `features/api/` + `src/bdd/steps/api/`, then executed from the generated `.features-gen/api` directory.
 
-### Step 3: The spec uses the custom API fixture
+### Step 3: The generated spec uses the custom API fixture
 
-The test file imports the shared fixture from [src/api/fixtures/apiTest.ts](src/api/fixtures/apiTest.ts).
+The generated spec file imports the shared fixture from [src/api/fixtures/apiTest.ts](src/api/fixtures/apiTest.ts) — the same file the step definitions in `event.steps.ts` import `test` from, via `createBdd(test)`.
 
-That file extends Playwright's base `test` and injects the `api` fixture into the test context.
+That file extends `playwright-bdd`'s `test` (not `@playwright/test`'s directly — required by `createBdd()`) and injects the `api` fixture into the test context, plus a shared lifecycle-logging auto-fixture.
 
 ### Step 4: The API fixture factory creates the API object
 
@@ -97,7 +98,8 @@ This allows the same test to continue a workflow across multiple API calls.
 
 ```mermaid
 flowchart TD
-    A[Test Spec\n event.spec.ts ] --> B[Playwright Fixture\n apiTest.ts ]
+    A0[Feature File\n event.feature ] --> A[Step Definitions\n event.steps.ts ]
+    A --> B[Playwright Fixture\n apiTest.ts ]
     B --> C[ApiFacade\n ApiFacade.ts ]
 
     C --> D[AuthService\n AuthenticationService.ts ]
@@ -121,11 +123,14 @@ flowchart TD
 
 ### What each file is used for
 
-- `tests/api/event.spec.ts`  
-  Test spec that defines the API workflow: login, create, update, delete.
+- `features/api/event.feature`  
+  Gherkin scenario that describes the API workflow: login, create, update, delete.
+
+- `src/bdd/steps/api/event.steps.ts`  
+  Step definitions implementing the feature file with `createBdd(test)`; `bddgen` turns this + the feature file into the generated `.features-gen/api/event.feature.spec.js`.
 
 - `src/api/fixtures/apiTest.ts`  
-  Custom Playwright fixture that injects the `api` object into the test context.
+  Custom Playwright fixture (extended from `playwright-bdd`'s `test`) that injects the `api` object into the test context.
 
 - `src/api/fixtures/apiFixture.ts`  
   Creates the request context, token manager, engine, and facade for every API test.
@@ -478,11 +483,11 @@ This is the setup layer for API tests. It prevents duplicate initialization code
 
 ### What it is
 
-This file extends Playwright's base `test` with the `api` fixture.
+This file extends `playwright-bdd`'s `test` (not `@playwright/test`'s directly — `createBdd()` requires it) with the `api` fixture and a shared lifecycle-logging auto-fixture.
 
 ### What it does
 
-It injects the `api` object into the test context and disposes of the request context after use.
+It injects the `api` object into the test context, disposes of the request context after use, and logs each test's start/end via `lifecycleLoggingFixture` (`src/hooks/testHook.ts`) — an auto-fixture rather than `test.beforeEach()`/`test.afterEach()`, because `bddgen` loads this file (via the step files that import `test` from it) outside an active Playwright suite while discovering steps.
 
 ### Why we use it
 
@@ -675,9 +680,9 @@ The framework needs more detail than a generic failure. Different HTTP status co
 
 The overall API lifecycle is:
 
-1. [package.json](package.json) invokes Playwright API test execution
-2. [playwright.config.ts](playwright.config.ts) discovers the spec file
-3. [tests/api/event.spec.ts](tests/api/event.spec.ts) uses the API fixture
+1. [package.json](package.json)'s `preapi`/`pretest` hooks run `npm run bddgen`, then invoke Playwright API test execution
+2. [playwright.config.ts](playwright.config.ts)'s `defineBddConfig()` turns [features/api/event.feature](features/api/event.feature) + [src/bdd/steps/api/event.steps.ts](src/bdd/steps/api/event.steps.ts) into a generated spec under `.features-gen/api/`
+3. The generated spec uses the API fixture, matching what `event.steps.ts` imports via `createBdd(test)`
 4. [src/api/fixtures/apiTest.ts](src/api/fixtures/apiTest.ts) provides the `api` fixture
 5. [src/api/fixtures/apiFixture.ts](src/api/fixtures/apiFixture.ts) creates the request context and engine
 6. [src/api/ApiFacade.ts](src/api/ApiFacade.ts) gives access to services and context

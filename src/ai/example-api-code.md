@@ -147,55 +147,88 @@ apiEvent.createEvent.price,499,number
 
 `CsvProvider`/`ExcelProvider` rebuild this into the identical nested object via `unflattenRows` (`src/data/utils/tabularData.ts`), so the test below works unchanged regardless of `TEST_DATA_FORMAT`.
 
-## 7. `tests/api/`
+## 7. `features/api/`
 
-File: `authentication.spec.ts`
-Purpose: validate the API flow with the service layer instead of raw request calls.
+File: `authentication.feature`
+Purpose: describe the API flow in Gherkin — one scenario for login, one for the login-then-create-event flow.
+
+```gherkin
+@api
+Feature: Authentication
+  As an authenticated API client
+  I want to log in and create resources
+  So that event management works end-to-end
+
+  @smoke
+  Scenario: Login API should return success and token
+    When I log in via the API with valid credentials
+    Then the login should succeed and return an auth token
+
+  @regression
+  Scenario: Create event API should use login token and return created event
+    Given I log in via the API with valid credentials
+    When I create an event
+    Then the event should be created successfully
+```
+
+## 8. `src/bdd/steps/api/`
+
+File: `authentication.steps.ts`
+Purpose: implement the Gherkin steps with the service layer instead of raw request calls, carrying values between steps via `api.setContextValue()`/`api.getContextValue()`.
 
 ```typescript
-import { test, expect } from "../../src/api/fixtures/apiTest";
-import { TestData } from "../../src/data";
-import { AuthenticationData } from "../../src/data/models/AuthenticationData";
+import { createBdd } from "playwright-bdd";
 
-test.describe("API :: Authentication", () => {
-  let authentication: AuthenticationData;
+import { test, expect } from "../../../api/fixtures/apiTest";
+import { TestData } from "../../../data";
+import { AuthenticationData } from "../../../data/models/AuthenticationData";
+import { LoginResponse } from "../../../api/responses/LoginResponse";
 
-  test.beforeAll(async () => {
-    authentication = await TestData.load<AuthenticationData>("authentication");
+const { Given, When, Then, BeforeAll } = createBdd(test);
+
+let authentication: AuthenticationData;
+
+// Tag-scoped: an unscoped BeforeAll is global across every generated feature file
+// (including the UI layer's), which breaks bddgen's per-feature fixture guessing.
+BeforeAll({ tags: "@api" }, async () => {
+  authentication = await TestData.load<AuthenticationData>("authentication");
+});
+
+Given("I log in via the API with valid credentials", async ({ api }) => {
+  const user = authentication.apiLogin.validUser;
+
+  const loginResponse = await api.service("auth").login({
+    email: user.email,
+    password: user.password,
   });
 
-  test("Login API should return success and token", async ({ api }) => {
-    const user = authentication.apiLogin.validUser;
+  api.setContextValue("loginResponse", loginResponse);
+});
 
-    const response = await api.service("auth").login({
-      email: user.email,
-      password: user.password,
-    });
+Then("the login should succeed and return an auth token", async ({ api }) => {
+  const loginResponse = api.getContextValue<LoginResponse>("loginResponse");
 
-    expect(response.success).toBe(true);
-    expect(response.token).toBeTruthy();
-    expect(response.user.email).toBe(user.email);
-  });
+  expect(loginResponse.success).toBe(true);
+  expect(loginResponse.token).toBeTruthy();
 
-  test("Create event API should use login token and return created event", async ({
-    api,
-  }) => {
-    const eventRequest = {
-      ...authentication.apiEvent.createEvent,
-    };
+  api.setContextValue("authToken", loginResponse.token);
+});
 
-    const loginResponse = await api.service("auth").login({
-      email: authentication.apiLogin.validUser.email,
-      password: authentication.apiLogin.validUser.password,
-    });
+When("I create an event", async ({ api }) => {
+  const eventRequest = { ...authentication.apiEvent.createEvent };
 
-    api.setContextValue("authToken", loginResponse.token);
+  const eventResponse = await api.service("event").createEvent(eventRequest);
 
-    const eventResponse = await api.service("event").createEvent(eventRequest);
+  api.setContextValue("eventResponse", eventResponse);
+});
 
-    expect(eventResponse.success).toBe(true);
-    expect(eventResponse.data.id).toBeGreaterThan(0);
-  });
+Then("the event should be created successfully", async ({ api }) => {
+  const eventResponse = api.getContextValue<{ success: boolean; data: { id: number } }>(
+    "eventResponse",
+  );
+
+  expect(eventResponse.success).toBe(true);
+  expect(eventResponse.data.id).toBeGreaterThan(0);
 });
 ```
 
@@ -208,5 +241,6 @@ When adopting this framework for a new application, the consumer should create t
 - Add endpoint constants in `src/constants/APIEndpoints.ts`
 - Add endpoint wrappers in `src/api/services/`
 - Add dataset files for every supported format (JSON, YAML, CSV, Excel) in `src/data/datasets/`
-- Add API scenario tests in `tests/api/`
+- Add API scenarios under `features/api/*.feature` and their step definitions under `src/bdd/steps/api/*.steps.ts`
+- Run `npm run bddgen` to regenerate `.features-gen/` after adding or changing a `.feature` file or step definitions
 - Keep the folder contract stable even when the target application changes

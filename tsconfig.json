@@ -15,6 +15,6 @@
     "noFallthroughCasesInSwitch": true,
     "noEmit": true
   },
-  "include": ["src/**/*.ts", "tests/**/*.ts", "config/**/*.ts", "playwright.config.ts"],
-  "exclude": ["node_modules", "allure-report", "allure-results", "test-results", "playwright-report"]
+  "include": ["src/**/*.ts", "config/**/*.ts", "playwright.config.ts"],
+  "exclude": ["node_modules", "allure-report", "allure-results", "test-results", "playwright-report", ".features-gen"]
 }

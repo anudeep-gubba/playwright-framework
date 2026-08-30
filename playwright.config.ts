@@ -1,9 +1,28 @@
 import { defineConfig } from "@playwright/test";
+import { defineBddConfig } from "playwright-bdd";
 import { ENV } from "./config/envLoader";
 
+// Generates a Playwright spec file per Gherkin scenario into `.features-gen`
+// (gitignored) — run automatically via the `bddgen` npm script before every
+// test run (see package.json `pre*` hooks). Each `.feature` file's steps are
+// matched against `src/bdd/steps/**/*.steps.ts`; which fixtures (`loginPage`,
+// `api`, ...) a scenario gets is inferred from whichever `createBdd(test)`
+// its step definitions use, so UI and API scenarios can share this one config.
+const testDir = defineBddConfig({
+  features: "features/**/*.feature",
+  // Step-definition files, plus the two fixture files they pull `test` from — bddgen
+  // needs both UI and API fixture files directly in this list to resolve which custom
+  // `test` instance (and so which fixtures) each generated scenario should import.
+  steps: [
+    "src/bdd/steps/**/*.steps.ts",
+    "src/fixtures/testFixture.ts",
+    "src/api/fixtures/apiTest.ts",
+  ],
+  featuresRoot: "features",
+});
+
 export default defineConfig({
-  testDir: "./tests",
-  testMatch: "**/*.spec.ts",
+  testDir,
 
   timeout: ENV.DEFAULT_TIMEOUT,
 

@@ -4,62 +4,91 @@ Use this file as the project-aligned reference contract for new UI flows in this
 
 The examples below are based on the current code already present in the workspace, not on a synthetic template.
 
-## 1. `tests/authentication/`
+## 1. `features/ui/authentication/`
 
-File: `login.spec.ts`
-Purpose: exercise the current login flow using the shared fixture and page object model.
+File: `login.feature`
+Purpose: describe the current login flow in Gherkin — one scenario per distinct behavior, tagged for grouping and `--grep` filtering. Use `Scenario Outline` + `Examples` (not repeated near-duplicate `Scenario`s) whenever multiple scenarios only differ by one data value, like the two negative-credential cases here; naming the outline itself with the column placeholder (`Invalid <credentialKey> should...`) gives each generated example a readable title instead of the default `Example #1`/`Example #2`.
+
+```gherkin
+@ui
+Feature: Login
+  As a registered user
+  I want to log in with my credentials
+  So that I can access my dashboard
+
+  Background:
+    Given I am on the login page
+
+  @smoke
+  Scenario: Valid user should login successfully
+    When I log in with the "validUser" credentials
+    Then I should be redirected to the dashboard
+
+  @regression @negative
+  Scenario Outline: Invalid <credentialKey> should display a login error
+    When I log in with the "<credentialKey>" credentials
+    Then a login error should be displayed
+
+    Examples:
+      | credentialKey   |
+      | invalidPassword |
+      | invalidEmail    |
+```
+
+## 2. `src/bdd/steps/ui/authentication/`
+
+File: `login.steps.ts`
+Purpose: implement the Gherkin steps against the shared fixture and page object, resolving named credential keys from the loaded dataset rather than accepting literal values from step text.
 
 ```typescript
-import { test } from "../../src/fixtures/testFixture";
-import { TestData } from "../../src/data";
-import { AuthenticationData } from "../../src/data/models/AuthenticationData";
-import { LoginValidator } from "../../src/validators/LoginValidator";
+import { createBdd } from "playwright-bdd";
 
-test.describe("Authentication :: Login", () => {
-  let authentication: AuthenticationData;
+import { test } from "../../../../fixtures/testFixture";
+import { TestData } from "../../../../data";
+import { AuthenticationData } from "../../../../data/models/AuthenticationData";
+import { User } from "../../../../models/User";
+import { LoginValidator } from "../../../../validators/LoginValidator";
 
-  test.beforeAll(async () => {
-    authentication = await TestData.load<AuthenticationData>("authentication");
-  });
+const { Given, When, Then, BeforeAll } = createBdd(test);
 
-  test.describe("Positive Scenarios", () => {
-    test("Valid user should login successfully", async ({ loginPage }) => {
-      const user = structuredClone(authentication.login.validUser);
+let authentication: AuthenticationData;
 
-      await loginPage.navigate();
+// Tag-scoped: an unscoped BeforeAll is global across every generated feature file
+// (including the API layer's), which breaks bddgen's per-feature fixture guessing.
+BeforeAll({ tags: "@ui" }, async () => {
+  authentication = await TestData.load<AuthenticationData>("authentication");
+});
 
-      await loginPage.login(user);
+function resolveLoginUser(key: string): User {
+  const loginUsers: Record<string, User> = {
+    validUser: authentication.login.validUser,
+    invalidPassword: authentication.login.invalidPassword,
+    invalidEmail: authentication.login.invalidEmail,
+  };
 
-      await loginPage.waitForLoad();
+  return structuredClone(loginUsers[key]);
+}
 
-      LoginValidator.expectLoginSuccess(await loginPage.currentUrl());
-    });
-  });
+Given("I am on the login page", async ({ loginPage }) => {
+  await loginPage.navigate();
+});
 
-  test.describe("Negative Scenarios", () => {
-    // Data-driven names/keys only — the actual dataset values aren't available until
-    // `beforeAll` has run, so don't read `authentication.*` at describe-body scope.
-    const negativeScenarios = [
-      ["Invalid password", "invalidPassword"],
-      ["Invalid email", "invalidEmail"],
-    ] as const;
+When("I log in with the {string} credentials", async ({ loginPage }, userKey: string) => {
+  await loginPage.login(resolveLoginUser(userKey));
+});
 
-    for (const [name, key] of negativeScenarios) {
-      test(`${name} should display login error`, async ({ loginPage }) => {
-        const loginUser = structuredClone(authentication.login[key]);
+Then("I should be redirected to the dashboard", async ({ loginPage }) => {
+  await loginPage.waitForLoad();
 
-        await loginPage.navigate();
+  LoginValidator.expectLoginSuccess(await loginPage.currentUrl());
+});
 
-        await loginPage.login(loginUser);
-
-        LoginValidator.expectLoginFailed(await loginPage.getErrorMessage());
-      });
-    }
-  });
+Then("a login error should be displayed", async ({ loginPage }) => {
+  LoginValidator.expectLoginFailed(await loginPage.getErrorMessage());
 });
 ```
 
-## 2. `src/pages/`
+## 3. `src/pages/`
 
 File: `LoginPage.ts`
 Purpose: keep page interactions and navigational actions in one place.
@@ -119,7 +148,7 @@ export class LoginPage extends BasePage {
 }
 ```
 
-## 3. `src/components/`
+## 4. `src/components/`
 
 File: `TextBox.ts`
 Purpose: wrap reusable input behavior such as typing, clearing, and reading values.
@@ -169,7 +198,7 @@ export class Button extends BaseComponent {
 }
 ```
 
-## 4. `src/locators/`
+## 5. `src/locators/`
 
 File: `LoginPageLocators.ts`
 Purpose: keep selectors stable and separate from page behavior.
@@ -183,33 +212,36 @@ export class LoginPageLocators {
 }
 ```
 
-## 5. `src/fixtures/`
+## 6. `src/fixtures/`
 
 File: `testFixture.ts`
-Purpose: provide the standard reusable fixtures for UI tests.
+Purpose: provide the standard reusable fixtures for UI scenarios, extended from `playwright-bdd`'s `test` (not `@playwright/test`'s directly) so `createBdd(test)` works in step files, plus the shared lifecycle-logging auto-fixture.
 
 ```typescript
-import { test as base, expect } from "@playwright/test";
+import { expect } from "@playwright/test";
+import { test as base } from "playwright-bdd";
 
 import { LoginPage } from "../pages/LoginPage";
+import { lifecycleLoggingFixture, LifecycleLoggingFixtures } from "../hooks/testHook";
 
 type FrameworkFixtures = {
   loginPage: LoginPage;
-};
+} & LifecycleLoggingFixtures;
 
 export const test = base.extend<FrameworkFixtures>({
   loginPage: async ({ page }, use) => {
     await use(new LoginPage(page));
   },
+  ...lifecycleLoggingFixture,
 });
 
 export { expect };
 ```
 
-## 6. `src/validators/`
+## 7. `src/validators/`
 
 File: `LoginValidator.ts`
-Purpose: validate UI outcomes with readable assertions.
+Purpose: validate UI outcomes with readable assertions, called from `Then` steps.
 
 ```typescript
 import { expect } from "@playwright/test";
@@ -226,7 +258,7 @@ export class LoginValidator {
 }
 ```
 
-## 7. `src/models/`
+## 8. `src/models/`
 
 File: `User.ts`
 Purpose: define the request payload shape used by the login page object.
@@ -238,7 +270,7 @@ export interface User {
 }
 ```
 
-## 8. `src/constants/`
+## 9. `src/constants/`
 
 File: `AppRoutes.ts`
 Purpose: centralize navigation routes used by page classes.
@@ -249,7 +281,7 @@ export const AppRoutes = Object.freeze({
 });
 ```
 
-## 9. `src/data/models/`
+## 10. `src/data/models/`
 
 File: `AuthenticationData.ts`
 Purpose: describe the structure of the dataset used by login and registration scenarios.
@@ -273,14 +305,15 @@ export interface AuthenticationData {
 }
 ```
 
-## 10. `src/data/datasets/json/`
+## 11. `src/data/datasets/json/`
 
 File: `authentication.json`
 Purpose: keep static UI credentials separated from test code. `validUser` holds a real, working
 account, so its email/password are `{{key}}` placeholders resolved via `resolveSecrets()`
 (`src/data/utils/resolveSecrets.ts`) against `config/secrets/<env>.env` — never commit the real
-values. `invalidPassword`/`invalidEmail` are deliberately-wrong values that never authenticate
-anything, so they're plain data, not secrets.
+values, and never inline them (or the deliberately-wrong ones below) as literal step text in a
+`.feature` file. `invalidPassword`/`invalidEmail` are deliberately-wrong values that never
+authenticate anything, so they're plain data, not secrets.
 
 ```json
 {
@@ -301,7 +334,7 @@ anything, so they're plain data, not secrets.
 }
 ```
 
-## 11. `src/data/datasets/yaml/`
+## 12. `src/data/datasets/yaml/`
 
 File: `authentication.yaml`
 Purpose: provide the same dataset in YAML format for easier review. Quote `{{...}}` placeholders —
@@ -337,7 +370,7 @@ login.invalidEmail.email,invalid@test.com,string
 login.invalidEmail.password,Password123,string
 ```
 
-`CsvProvider`/`ExcelProvider` rebuild this into the identical nested object via `unflattenRows` (`src/data/utils/tabularData.ts`), so `AuthenticationData` and the spec below work unchanged regardless of `TEST_DATA_FORMAT`.
+`CsvProvider`/`ExcelProvider` rebuild this into the identical nested object via `unflattenRows` (`src/data/utils/tabularData.ts`), so `AuthenticationData` and the steps above work unchanged regardless of `TEST_DATA_FORMAT`.
 
 ## What a consumer should add
 
@@ -350,4 +383,5 @@ When using this framework for a new application, keep the same folder contract a
 - Add result validators in `src/validators/`
 - Add test data models in `src/data/models/`
 - Add dataset files for every supported format (JSON, YAML, CSV, Excel) in `src/data/datasets/`
-- Add UI scenario tests under the current test naming convention in `tests/`
+- Add UI scenarios under `features/ui/<feature>/*.feature` and their step definitions under `src/bdd/steps/ui/<feature>/*.steps.ts`
+- Run `npm run bddgen` to regenerate `.features-gen/` after adding or changing a `.feature` file or step definitions
