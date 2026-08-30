@@ -1,5 +1,6 @@
 import { test as base, expect } from "@playwright/test";
 import { createApiFixture, ApiFixture } from "./apiFixture";
+import { registerTestHooks } from "../../hooks/testHook";
 
 export const test = base.extend<ApiFixture>({
   api: async ({}, use, testInfo) => {
@@ -10,5 +11,7 @@ export const test = base.extend<ApiFixture>({
     await requestContext.dispose();
   },
 });
+
+registerTestHooks(test);
 
 export { expect };

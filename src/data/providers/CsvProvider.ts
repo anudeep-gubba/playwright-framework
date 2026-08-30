@@ -7,7 +7,7 @@ import { TabularRow, unflattenRows } from "../utils/tabularData";
 export class CsvProvider extends BaseDataProvider {
   protected readonly extension = "csv";
 
-  protected parse<T>(filePath: string): T {
+  protected async parse<T>(filePath: string): Promise<T> {
     const rows = parse(fs.readFileSync(filePath, "utf8"), {
       columns: true,
       skip_empty_lines: true,

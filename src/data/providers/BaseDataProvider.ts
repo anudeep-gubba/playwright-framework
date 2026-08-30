@@ -3,15 +3,16 @@ import path from "path";
 
 import { ENV } from "../../../config/envLoader";
 import { IDataProvider } from "./IDataProvider";
+import { resolveSecrets } from "../utils/resolveSecrets";
 
 export abstract class BaseDataProvider implements IDataProvider {
   private readonly cache = new Map<string, unknown>();
 
   protected abstract readonly extension: string;
 
-  protected abstract parse<T>(filePath: string): T;
+  protected abstract parse<T>(filePath: string): Promise<T>;
 
-  public load<T>(fileName: string): T {
+  public async load<T>(fileName: string): Promise<T> {
     const cacheKey = `${ENV.TEST_DATA_FORMAT}:${fileName}`;
 
     const cached = this.cache.get(cacheKey);
@@ -21,7 +22,8 @@ export abstract class BaseDataProvider implements IDataProvider {
 
     const filePath = this.resolveFilePath(fileName);
 
-    const data = this.parse<T>(filePath);
+    const parsed = await this.parse<T>(filePath);
+    const data = resolveSecrets(parsed);
 
     this.cache.set(cacheKey, data);
 

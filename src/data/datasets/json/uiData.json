@@ -1,8 +1,8 @@
 {
   "login": {
     "validUser": {
-      "email": "testaccountag@gmail.com",
-      "password": "Test@1234"
+      "email": "{{uiValidUserEmail}}",
+      "password": "{{uiValidUserPassword}}"
     },
     "invalidPassword": {
       "email": "valid@test.com",

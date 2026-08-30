@@ -10,9 +10,10 @@ A hybrid Playwright automation framework supporting separate **UI** and **API** 
 
 ```bash
 npm test                # run full suite (playwright test)
-npm run ui               # UI tests only -> playwright test tests/authentication
+npm run ui               # UI tests only -> playwright test tests/authentication tests/checkout
 npm run api              # API tests only -> playwright test tests/api
 npm run smoke             # tests tagged @smoke
+npm run regression       # tests tagged @regression
 npm run typecheck        # tsc --noEmit
 npm run report            # open last Playwright HTML report
 npm run allure-report    # generate + open Allure report
@@ -64,7 +65,7 @@ Flow: `tests/api/*.spec.ts` → `src/api/fixtures/apiTest.ts` (extends `test` wi
 
 ### Test data
 
-`src/data/TestData.ts` is the single entry point: `TestData.load<T>("fileName")` picks a provider via `src/data/factory/DataProviderFactory.ts`, keyed on `ENV.TEST_DATA_FORMAT`. Providers (`JsonProvider`/`YamlProvider`/`CsvProvider`/`ExcelProvider`, all implementing `IDataProvider`) read from `src/data/datasets/<format>/*.<ext>` (`json`, `yaml`, `csv`, `excel` → `.xlsx`) — the same logical dataset must exist in every format.
+`src/data/TestData.ts` is the single entry point: `await TestData.load<T>("fileName")` picks a provider via `src/data/factory/DataProviderFactory.ts`, keyed on `ENV.TEST_DATA_FORMAT`. Providers (`JsonProvider`/`YamlProvider`/`CsvProvider`/`ExcelProvider`, all implementing `IDataProvider`) read from `src/data/datasets/<format>/*.<ext>` (`json`, `yaml`, `csv`, `excel` → `.xlsx`) — the same logical dataset must exist in every format. `load()` is async (the Excel provider reads via `exceljs`, which has no sync API) and results are cached per provider instance, so call it once from a `test.beforeAll` in each spec rather than at module scope — see `tests/authentication/login.spec.ts` for the pattern.
 
 `JsonProvider`/`YamlProvider` parse the file's native nested structure directly. `CsvProvider`/`ExcelProvider` instead read flat `key,value,type` rows (header required) — `key` is a dot-path (e.g. `checkout.payment.cvv`), `type` is optional and one of `string` (default) | `number` | `boolean`. Both are rebuilt into the same nested shape via `unflattenRows` in `src/data/utils/tabularData.ts`, so all four formats produce identical objects and the same data models work unchanged. Always set an explicit `type` for non-string values (e.g. `price,1500,number`) — CSV/Excel values are otherwise treated as strings, unlike JSON/YAML where numeric/boolean types are implicit.
 
@@ -73,6 +74,8 @@ Current datasets/models:
 - `apiData.{json,yaml,csv,xlsx}` + `src/data/models/ApiData.ts` — used by API specs (login + event payloads); reuses request types like `CreateEventRequest` from `src/api/requests/EventRequest.ts` so payload shape stays in sync with the service layer.
 
 Both data models reuse the shared domain type `src/models/User.ts` for credentials. When adding a new dataset, add the file for every supported format (JSON, YAML, CSV, Excel), add a typed model in `src/data/models/`, and export it from `src/data/models/index.ts`.
+
+**Secrets in test data:** never put a real credential value directly in `src/data/datasets/*` — reference it as a `{{key}}` placeholder instead (e.g. `"password": "{{uiValidUserPassword}}"`, quoted in YAML since `{{` is flow-mapping syntax there). `BaseDataProvider.load()` resolves every such placeholder via `resolveSecrets()` (`src/data/utils/resolveSecrets.ts`) against `Secrets.get()` (`config/secretsLoader.ts`), which checks a real environment variable of the same name first, then falls back to the gitignored `config/secrets/<env>.env` (copy the matching `*.env.example` template locally; CI supplies the env vars from GitHub Actions repository secrets — see `.github/workflows/playwright-tests.yml`). A referenced key that resolves to nothing throws immediately rather than silently sending the literal `{{key}}` string to the app.
 
 ### Shared building blocks
 

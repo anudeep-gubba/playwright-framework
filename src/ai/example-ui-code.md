@@ -15,9 +15,13 @@ import { TestData } from "../../src/data";
 import { AuthenticationData } from "../../src/data/models/AuthenticationData";
 import { LoginValidator } from "../../src/validators/LoginValidator";
 
-const authentication = TestData.load<AuthenticationData>("authentication");
-
 test.describe("Authentication :: Login", () => {
+  let authentication: AuthenticationData;
+
+  test.beforeAll(async () => {
+    authentication = await TestData.load<AuthenticationData>("authentication");
+  });
+
   test.describe("Positive Scenarios", () => {
     test("Valid user should login successfully", async ({ loginPage }) => {
       const user = structuredClone(authentication.login.validUser);
@@ -32,22 +36,26 @@ test.describe("Authentication :: Login", () => {
     });
   });
 
-  const negativeScenarios = [
-    ["Invalid password", authentication.login.invalidPassword],
-    ["Invalid email", authentication.login.invalidEmail],
-  ] as const;
+  test.describe("Negative Scenarios", () => {
+    // Data-driven names/keys only — the actual dataset values aren't available until
+    // `beforeAll` has run, so don't read `authentication.*` at describe-body scope.
+    const negativeScenarios = [
+      ["Invalid password", "invalidPassword"],
+      ["Invalid email", "invalidEmail"],
+    ] as const;
 
-  for (const [name, user] of negativeScenarios) {
-    test(`${name} should display login error`, async ({ loginPage }) => {
-      const loginUser = structuredClone(user);
+    for (const [name, key] of negativeScenarios) {
+      test(`${name} should display login error`, async ({ loginPage }) => {
+        const loginUser = structuredClone(authentication.login[key]);
 
-      await loginPage.navigate();
+        await loginPage.navigate();
 
-      await loginPage.login(loginUser);
+        await loginPage.login(loginUser);
 
-      LoginValidator.expectLoginFailed(await loginPage.getErrorMessage());
-    });
-  }
+        LoginValidator.expectLoginFailed(await loginPage.getErrorMessage());
+      });
+    }
+  });
 });
 ```
 
@@ -268,14 +276,18 @@ export interface AuthenticationData {
 ## 10. `src/data/datasets/json/`
 
 File: `authentication.json`
-Purpose: keep static UI credentials separated from test code.
+Purpose: keep static UI credentials separated from test code. `validUser` holds a real, working
+account, so its email/password are `{{key}}` placeholders resolved via `resolveSecrets()`
+(`src/data/utils/resolveSecrets.ts`) against `config/secrets/<env>.env` — never commit the real
+values. `invalidPassword`/`invalidEmail` are deliberately-wrong values that never authenticate
+anything, so they're plain data, not secrets.
 
 ```json
 {
   "login": {
     "validUser": {
-      "email": "testaccountag@gmail.com",
-      "password": "Test@1234"
+      "email": "{{uiValidUserEmail}}",
+      "password": "{{uiValidUserPassword}}"
     },
     "invalidPassword": {
       "email": "valid@test.com",
@@ -292,13 +304,14 @@ Purpose: keep static UI credentials separated from test code.
 ## 11. `src/data/datasets/yaml/`
 
 File: `authentication.yaml`
-Purpose: provide the same dataset in YAML format for easier review.
+Purpose: provide the same dataset in YAML format for easier review. Quote `{{...}}` placeholders —
+unquoted, `{` starts YAML flow-mapping syntax.
 
 ```yaml
 login:
   validUser:
-    email: testaccountag@gmail.com
-    password: Test@1234
+    email: "{{uiValidUserEmail}}"
+    password: "{{uiValidUserPassword}}"
 
   invalidPassword:
     email: valid@test.com
@@ -316,8 +329,8 @@ Purpose: same dataset as above, expressed as flat `key,value,type` rows instead 
 
 ```csv
 key,value,type
-login.validUser.email,testaccountag@gmail.com,string
-login.validUser.password,Test@1234,string
+login.validUser.email,{{uiValidUserEmail}},string
+login.validUser.password,{{uiValidUserPassword}},string
 login.invalidPassword.email,valid@test.com,string
 login.invalidPassword.password,WrongPassword,string
 login.invalidEmail.email,invalid@test.com,string

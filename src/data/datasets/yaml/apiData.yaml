@@ -1,7 +1,7 @@
 login:
   validUser:
-    email: automationtesterag@gmail.com
-    password: passw0rd
+    email: "{{apiValidUserEmail}}"
+    password: "{{apiValidUserPassword}}"
 
 event:
   createEvent:

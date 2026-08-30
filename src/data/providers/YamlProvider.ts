@@ -6,7 +6,7 @@ import { BaseDataProvider } from "./BaseDataProvider";
 export class YamlProvider extends BaseDataProvider {
   protected readonly extension = "yaml";
 
-  protected parse<T>(filePath: string): T {
+  protected async parse<T>(filePath: string): Promise<T> {
     return YAML.parse(fs.readFileSync(filePath, "utf8")) as T;
   }
 }

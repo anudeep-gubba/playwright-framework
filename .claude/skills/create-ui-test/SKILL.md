@@ -42,7 +42,8 @@ Scaffold a new UI test flow for this Playwright framework, following the Page Ob
 - Page objects must not contain `expect(...)` assertions or business rules — those belong in `src/validators/*.ts`.
 - Build UI actions from `src/components/*` wrappers rather than raw `page.locator()` calls in page objects.
 - Wrap logical UI actions in `AllureHelper.step(name, fn)` for step-level reporting (see `LoginPage.login`).
-- Load test data with `TestData.load<T>("uiData")` rather than hardcoding credentials/values in the spec.
+- Load test data with `await TestData.load<T>("uiData")` inside a `test.beforeAll` (it's async) rather than hardcoding credentials/values in the spec.
+- Never put a real credential value in `src/data/datasets/*` — reference it as `{{key}}` (e.g. `"{{uiValidUserPassword}}"`) and add the real value to `config/secrets/<env>.env` (gitignored; see `config/secrets/*.env.example`). See `resolveSecrets()` in `src/data/utils/resolveSecrets.ts`.
 - Do not import API service classes into UI tests/page objects.
 - Keep each test focused on one application behavior or scenario.
 - Use `src/utils/Logger.ts` for any UI helper logging, not `console.log`.
