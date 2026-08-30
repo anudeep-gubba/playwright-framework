@@ -1,5 +1,4 @@
 import fs from "fs";
-import path from "path";
 import { ENV } from "./envLoader";
 
 async function globalSetup() {
@@ -13,11 +12,6 @@ async function globalSetup() {
   folders.forEach((folder) => {
     fs.mkdirSync(folder, { recursive: true });
   });
-
-  const storageState = path.join(process.cwd(), "src/storageState/user.json");
-  if (fs.existsSync(storageState)) {
-    fs.unlinkSync(storageState);
-  }
 }
 
 export default globalSetup;

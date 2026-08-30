@@ -3,10 +3,14 @@ import { test, expect } from "../../src/api/fixtures/apiTest";
 import { TestData } from "../../src/data";
 import { ApiData } from "../../src/data/models/ApiData";
 
-const apiData = TestData.load<ApiData>("apiData");
-
 test.describe("API :: Event CRUD", () => {
-  test("should login, create, update and delete an event via API", async ({
+  let apiData: ApiData;
+
+  test.beforeAll(async () => {
+    apiData = await TestData.load<ApiData>("apiData");
+  });
+
+  test("should login, create, update and delete an event via API @regression", async ({
     api,
   }) => {
     const user = apiData.login.validUser;

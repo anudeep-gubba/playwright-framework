@@ -38,6 +38,10 @@ npm install
    - `API_BASE_URL` for API tests
    - `TEST_DATA_FORMAT` set to `json`, `yaml`, `csv`, or `excel`
 
+4. Copy the secrets template for your environment and fill in real credential values (gitignored,
+   never committed): `cp config/secrets/qa.env.example config/secrets/qa.env`. See
+   [Secrets in test data](#secrets-in-test-data) below.
+
 ## Project Structure
 
 ```text
@@ -65,8 +69,8 @@ npm install
 │   └── validators/          # Optional validation helpers for UI assertions
 ├── tests/
 │   ├── api/                 # API test specs
-│   ├── ui/                  # UI test specs
-│   └── authentication/      # Existing authentication UI tests
+│   ├── authentication/      # UI login test specs
+│   └── checkout/            # UI checkout/e2e test specs
 ├── allure-report/          # Generated Allure report output (ignored)
 ├── allure-results/         # Generated Allure results (ignored)
 ├── logs/                   # Generated log files (ignored)
@@ -165,8 +169,8 @@ npm install
 ### `tests/`
 
 - `api/`: API test specifications and flows.
-- `ui/`: UI test specifications for end-to-end browser scenarios.
-- `authentication/`: Existing authentication-focused tests.
+- `authentication/`: UI login test specifications.
+- `checkout/`: UI end-to-end shopping/checkout test specifications.
 
 ### Root files
 
@@ -175,6 +179,35 @@ npm install
 - `Readme.md`: Project documentation and usage guide.
 
 ## How Test Data Works
+
+### Secrets in test data
+
+Real credential values never go into `src/data/datasets/*` — those files reference a placeholder
+instead, and the actual value is resolved at load time:
+
+```json
+"validUser": {
+  "email": "{{uiValidUserEmail}}",
+  "password": "{{uiValidUserPassword}}"
+}
+```
+
+(In YAML, quote the value — `"{{uiValidUserPassword}}"` — since `{{` is flow-mapping syntax otherwise.)
+
+`TestData.load()` resolves every `{{key}}` placeholder against `Secrets.get(key)`
+(`config/secretsLoader.ts`), which looks in two places, in order:
+
+1. A real environment variable named exactly `key` (e.g. `uiValidUserPassword`) — this is how CI
+   supplies values, via GitHub Actions repository secrets (see `.github/workflows/playwright-tests.yml`).
+2. `config/secrets/<TEST_ENV>.env` — gitignored, local-only. Copy the matching
+   `config/secrets/<env>.env.example` template to `<env>.env` and fill in real values to run locally.
+
+A key referenced in test data but not found in either place throws immediately, so a missing secret
+fails fast instead of silently sending the literal string `{{key}}` to the app.
+
+`ApiEngine` also redacts anything named `password`/`token`/`authorization`/etc. before it reaches
+logs or report attachments (see `src/utils/Redactor.ts`) — that protects a resolved secret value
+once it's in flight, on top of keeping it out of the dataset files in the first place.
 
 Test data is loaded through `src/data/TestData.ts`, which chooses a provider based on `TEST_DATA_FORMAT`.
 
@@ -196,23 +229,32 @@ event.createEvent.price,1500,number
 - `key` is a dot-path into the resulting object (e.g. `checkout.payment.cvv`).
 - `type` is optional and defaults to `string`; use `number` or `boolean` for non-string fields — otherwise the value is loaded as a string, unlike JSON/YAML where numeric/boolean types are implicit.
 
-Example in a test file:
+Example in a test file — `TestData.load` is async, so call it once via `test.beforeAll` rather than at module scope:
 
 ```ts
+import { test } from "../../src/fixtures/testFixture";
 import { TestData } from "../../src/data";
-import { AuthenticationData } from "../../src/data/models/AuthenticationData";
+import { UiData } from "../../src/data/models/UiData";
 
-const authentication = TestData.load<AuthenticationData>("authentication");
+test.describe("Authentication :: Login", () => {
+  let uiData: UiData;
+
+  test.beforeAll(async () => {
+    uiData = await TestData.load<UiData>("uiData");
+  });
+
+  // tests use `uiData` here
+});
 ```
 
-This will load `authentication.json`, `authentication.yaml`, `authentication.csv`, or `authentication.xlsx` depending on `TEST_DATA_FORMAT`.
+This will load `uiData.json`, `uiData.yaml`, `uiData.csv`, or `uiData.xlsx` depending on `TEST_DATA_FORMAT`.
 
 ## Adding a UI Test
 
 1. Create or update page objects in `src/pages/`.
 2. Add reusable controls in `src/components/` if needed.
 3. Add test data in `src/data/datasets/{json,yaml,csv,excel}/*` (same dataset in every supported format).
-4. Add the test spec in `tests/ui/*.spec.ts`.
+4. Add the test spec in `tests/<feature>/*.spec.ts` (e.g. `tests/authentication/`, `tests/checkout/`).
 5. Use shared fixtures via `src/fixtures/testFixture.ts`.
 
 ### Example Files to Change for a new UI flow
@@ -221,7 +263,7 @@ This will load `authentication.json`, `authentication.yaml`, `authentication.csv
 - `src/components/*` (optional reusable controls)
 - `src/data/models/*.ts`
 - `src/data/datasets/{json,yaml,csv,excel}/*` (same dataset in every supported format)
-- `tests/ui/my-feature.spec.ts`
+- `tests/my-feature/my-feature.spec.ts`
 
 ## Adding an API Test
 
@@ -260,10 +302,11 @@ Run UI tests only:
 npm run ui
 ```
 
-Run hybrid tests:
+Run tests tagged `@smoke` or `@regression`:
 
 ```bash
-npm run hybrid
+npm run smoke
+npm run regression
 ```
 
 ## Reporting
@@ -299,7 +342,7 @@ LOG_LEVEL=debug npm run api
 ### UI Debugging
 
 - Use built-in Playwright trace and screenshot output.
-- Inspect `tests/ui/*.spec.ts` for page navigation and assertions.
+- Inspect `tests/authentication/*.spec.ts` and `tests/checkout/*.spec.ts` for page navigation and assertions.
 - Review page actions in `src/pages/*.ts` and components in `src/components/`.
 - Use `src/utils/Logger.ts` if additional debug logging is needed.
 

@@ -4,6 +4,8 @@ import { ENV } from "../../config/envLoader";
 
 export function registerBeforeEachHook(test: typeof base): void {
   test.beforeEach(async ({}, testInfo) => {
+    Logger.setContext(`[w${testInfo.workerIndex}] [${testInfo.title}]`);
+
     Logger.info("====================================");
     Logger.info(`Test        : ${testInfo.title}`);
     Logger.info(`Project     : ${testInfo.project.name}`);

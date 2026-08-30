@@ -1,6 +1,6 @@
 key,value,type
-login.validUser.email,testaccountag@gmail.com,string
-login.validUser.password,Test@1234,string
+login.validUser.email,{{uiValidUserEmail}},string
+login.validUser.password,{{uiValidUserPassword}},string
 login.invalidPassword.email,valid@test.com,string
 login.invalidPassword.password,WrongPassword,string
 login.invalidEmail.email,invalid@test.com,string

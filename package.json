@@ -8,10 +8,12 @@
     "test": "playwright test",
     "presmoke": "rm -rf allure-results",
     "smoke": "playwright test --grep @smoke",
+    "preregression": "rm -rf allure-results",
+    "regression": "playwright test --grep @regression",
     "preapi": "rm -rf allure-results",
     "api": "playwright test tests/api",
     "preui": "rm -rf allure-results",
-    "ui": "playwright test tests/checkout",
+    "ui": "playwright test tests/authentication tests/checkout",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
@@ -24,8 +26,8 @@
     "allure-js-commons": "^3.10.2",
     "csv-parse": "^7.0.1",
     "dotenv": "^17.4.2",
+    "exceljs": "^4.4.0",
     "winston": "^3.19.0",
-    "xlsx": "^0.18.5",
     "yaml": "^2.9.0"
   },
   "devDependencies": {

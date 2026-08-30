@@ -89,14 +89,17 @@ export class AuthenticationService extends BaseService {
 ## 5. `src/data/datasets/json/`
 
 File: `authentication.json`
-Purpose: store static payloads used by API scenarios.
+Purpose: store static payloads used by API scenarios. `validUser` is a real, working account, so
+its email/password are `{{key}}` placeholders resolved via `resolveSecrets()`
+(`src/data/utils/resolveSecrets.ts`) against `config/secrets/<env>.env` — never commit the real
+values.
 
 ```json
 {
   "apiLogin": {
     "validUser": {
-      "email": "user@example.com",
-      "password": "Password123"
+      "email": "{{apiValidUserEmail}}",
+      "password": "{{apiValidUserPassword}}"
     }
   },
   "apiEvent": {
@@ -112,13 +115,14 @@ Purpose: store static payloads used by API scenarios.
 ## 6. `src/data/datasets/yaml/`
 
 File: `authentication.yaml`
-Purpose: alternate dataset format when YAML is preferred for readability.
+Purpose: alternate dataset format when YAML is preferred for readability. Quote `{{...}}`
+placeholders — unquoted, `{` starts YAML flow-mapping syntax.
 
 ```yaml
 apiLogin:
   validUser:
-    email: user@example.com
-    password: Password123
+    email: "{{apiValidUserEmail}}"
+    password: "{{apiValidUserPassword}}"
 
 apiEvent:
   createEvent:
@@ -134,8 +138,8 @@ Purpose: same dataset as above, expressed as flat `key,value,type` rows instead 
 
 ```csv
 key,value,type
-apiLogin.validUser.email,user@example.com,string
-apiLogin.validUser.password,Password123,string
+apiLogin.validUser.email,{{apiValidUserEmail}},string
+apiLogin.validUser.password,{{apiValidUserPassword}},string
 apiEvent.createEvent.title,Launch Event,string
 apiEvent.createEvent.city,Hyderabad,string
 apiEvent.createEvent.price,499,number
@@ -153,9 +157,13 @@ import { test, expect } from "../../src/api/fixtures/apiTest";
 import { TestData } from "../../src/data";
 import { AuthenticationData } from "../../src/data/models/AuthenticationData";
 
-const authentication = TestData.load<AuthenticationData>("authentication");
-
 test.describe("API :: Authentication", () => {
+  let authentication: AuthenticationData;
+
+  test.beforeAll(async () => {
+    authentication = await TestData.load<AuthenticationData>("authentication");
+  });
+
   test("Login API should return success and token", async ({ api }) => {
     const user = authentication.apiLogin.validUser;
 

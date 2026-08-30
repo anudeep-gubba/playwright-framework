@@ -10,5 +10,7 @@ export function registerAfterEachHook(test: typeof base): void {
     if (testInfo.status !== testInfo.expectedStatus) {
       Logger.error(`FAILED : ${testInfo.title}`);
     }
+
+    Logger.setContext("");
   });
 }

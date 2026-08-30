@@ -3,9 +3,13 @@ import { TestData } from "../../src/data";
 import { UiData } from "../../src/data/models/UiData";
 import { LoginValidator } from "../../src/validators/LoginValidator";
 
-const uiData = TestData.load<UiData>("uiData");
-
 test.describe("Authentication :: Login", () => {
+  let uiData: UiData;
+
+  test.beforeAll(async () => {
+    uiData = await TestData.load<UiData>("uiData");
+  });
+
   test.describe("Positive Scenarios", () => {
     test("Valid user should login successfully @smoke", async ({ loginPage }) => {
       const user = structuredClone(uiData.login.validUser);
@@ -20,13 +24,9 @@ test.describe("Authentication :: Login", () => {
     });
   });
 
-  const negativeScenarios = [
-    ["Invalid password", uiData.login.invalidPassword],
-    ["Invalid email", uiData.login.invalidEmail],
-  ] as const;
-  for (const [name, user] of negativeScenarios) {
-    test(`${name} should display login error`, async ({ loginPage }) => {
-      const loginUser = structuredClone(user);
+  test.describe("Negative Scenarios", () => {
+    test("Invalid password should display login error @regression", async ({ loginPage }) => {
+      const loginUser = structuredClone(uiData.login.invalidPassword);
 
       await loginPage.navigate();
 
@@ -34,5 +34,15 @@ test.describe("Authentication :: Login", () => {
 
       LoginValidator.expectLoginFailed(await loginPage.getErrorMessage());
     });
-  }
+
+    test("Invalid email should display login error @regression", async ({ loginPage }) => {
+      const loginUser = structuredClone(uiData.login.invalidEmail);
+
+      await loginPage.navigate();
+
+      await loginPage.login(loginUser);
+
+      LoginValidator.expectLoginFailed(await loginPage.getErrorMessage());
+    });
+  });
 });

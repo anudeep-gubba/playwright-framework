@@ -1,3 +1,3 @@
 export interface IDataProvider {
-  load<T>(fileName: string): T;
+  load<T>(fileName: string): Promise<T>;
 }

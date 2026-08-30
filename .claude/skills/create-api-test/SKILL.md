@@ -39,7 +39,8 @@ Scaffold a new API test flow for this Playwright framework, following the servic
 - Never call `request.newContext()` or raw `APIRequestContext` methods directly inside a test — everything goes through `api.service("<name>")`.
 - Do not hand-write endpoint URLs or headers in tests when a service method already exists; extend the service first.
 - Store values shared across steps (auth token, created resource id) via `api.setContextValue(...)` / `api.getContextValue(...)` — not local variables.
-- Load payloads with `TestData.load<T>("apiData")` rather than embedding ad-hoc JSON in the test.
+- Load payloads with `await TestData.load<T>("apiData")` inside a `test.beforeAll` (it's async) rather than embedding ad-hoc JSON in the test.
+- Never put a real credential value in `src/data/datasets/*` — reference it as `{{key}}` (e.g. `"{{apiValidUserPassword}}"`) and add the real value to `config/secrets/<env>.env` (gitignored; see `config/secrets/*.env.example`). See `resolveSecrets()` in `src/data/utils/resolveSecrets.ts`.
 - Keep API token storage in `src/api/auth/TokenManager.ts`; don't mix API auth state with UI fixtures.
 - Do not import UI page objects into API tests.
 - Use `src/utils/Logger.ts` for API-level logging, not `console.log`.

@@ -15,6 +15,15 @@ jobs:
     env:
       TEST_ENV: qa
       HEADLESS: true
+      # Test-data credential placeholders ({{uiValidUserEmail}}, etc. — see
+      # src/data/utils/resolveSecrets.ts) resolve against these repository
+      # secrets in CI instead of config/secrets/qa.env, which is gitignored
+      # and only exists locally. Add matching secrets under Settings ->
+      # Secrets and variables -> Actions.
+      uiValidUserEmail: ${{ secrets.UI_VALID_USER_EMAIL }}
+      uiValidUserPassword: ${{ secrets.UI_VALID_USER_PASSWORD }}
+      apiValidUserEmail: ${{ secrets.API_VALID_USER_EMAIL }}
+      apiValidUserPassword: ${{ secrets.API_VALID_USER_PASSWORD }}
 
     steps:
       - name: Checkout repository
@@ -35,8 +44,8 @@ jobs:
       - name: Install Playwright browser
         run: npx playwright install --with-deps chromium
 
-      - name: Run Playwright smoke tests
-        run: npm run smoke
+      - name: Run Playwright tests
+        run: npm run test
 
       - name: Upload Playwright HTML report
         if: always()

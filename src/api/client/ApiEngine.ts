@@ -5,6 +5,7 @@ import {
 } from "@playwright/test";
 
 import { Logger } from "../../utils/Logger";
+import { redact } from "../../utils/Redactor";
 import { RequestResponseAttachment } from "../../reporting/RequestResponseAttachment";
 
 import { TokenManager } from "../auth/TokenManager";
@@ -126,10 +127,7 @@ export class ApiEngine {
     };
     switch (request.method) {
       case HttpMethod.GET:
-        return this.requestContext.get(url, {
-          headers,
-          timeout: request.timeout,
-        });
+        return this.requestContext.get(url, options);
 
       case HttpMethod.POST:
         return this.requestContext.post(url, options);
@@ -159,13 +157,16 @@ export class ApiEngine {
     request: ApiRequest,
     headers: ApiHeaders,
   ): Promise<void> {
-    await RequestResponseAttachment.attachHeaders(this.testInfo, headers);
+    await RequestResponseAttachment.attachHeaders(this.testInfo, redact(headers));
 
-    await RequestResponseAttachment.attachRequest(this.testInfo, request);
+    await RequestResponseAttachment.attachRequest(this.testInfo, redact(request));
   }
 
   private async attachResponse<T>(response: ApiResponse<T>): Promise<void> {
-    await RequestResponseAttachment.attachResponse(this.testInfo, response);
+    await RequestResponseAttachment.attachResponse(
+      this.testInfo,
+      redact(response),
+    );
   }
 
   private logRequest<TRequest>(
@@ -174,14 +175,10 @@ export class ApiEngine {
     headers: ApiHeaders,
   ): void {
     Logger.info(`[API] Request -> ${request.method} ${url}`);
-    Logger.debug(
-      `[API] Request headers -> ${JSON.stringify(
-        this.redactHeaders(headers),
-      )}`,
-    );
+    Logger.debug(`[API] Request headers -> ${JSON.stringify(redact(headers))}`);
     if (request.body !== undefined) {
       Logger.info(
-        `[API] Request body -> ${JSON.stringify(request.body, null, 2)}`,
+        `[API] Request body -> ${JSON.stringify(redact(request.body), null, 2)}`,
       );
     }
   }
@@ -195,19 +192,11 @@ export class ApiEngine {
       `[API] Response <- ${url} [${response.status}] ${duration} ms`,
     );
     Logger.debug(
-      `[API] Response headers -> ${JSON.stringify(response.headers)}`,
+      `[API] Response headers -> ${JSON.stringify(redact(response.headers))}`,
     );
     Logger.info(
-      `[API] Response body -> ${JSON.stringify(response.body, null, 2)}`,
+      `[API] Response body -> ${JSON.stringify(redact(response.body), null, 2)}`,
     );
-  }
-  private redactHeaders(headers: ApiHeaders): ApiHeaders {
-    const safeHeaders = { ...headers };
-    if (safeHeaders.Authorization) {
-      safeHeaders.Authorization = "*****";
-    }
-
-    return safeHeaders;
   }
   // -------------------------------------------------------
   // Validation & Exception Handling

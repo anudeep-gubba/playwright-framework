@@ -3,9 +3,13 @@ import { TestData } from "../../src/data";
 import { UiData } from "../../src/data/models/UiData";
 import { CheckoutValidator } from "../../src/validators/CheckoutValidator";
 
-const uiData = TestData.load<UiData>("uiData");
-
 test.describe("Shopping :: Checkout", () => {
+  let uiData: UiData;
+
+  test.beforeAll(async () => {
+    uiData = await TestData.load<UiData>("uiData");
+  });
+
   test("Valid user should complete checkout and see the order in history @smoke @e2e", async ({
     loginPage,
     homePage,

@@ -46,11 +46,13 @@ Use these guidelines when generating new API tests, service classes, request/res
 - If a flow needs `create`, `update`, or `delete`, extend the service class first, then call the new method from the test.
 - Store reusable auth and resource values in `api.setContextValue(...)` and retrieve them with `api.getContextValue(...)` instead of local variables that are not shared across steps.
 - Centralize payload templates in test data files and load them with `TestData.load<T>("filename")` rather than embedding ad-hoc JSON directly in the test.
+- `TestData.load<T>("filename")` is async — call it once via `await` inside a `test.beforeAll`, not at module scope.
 
 4. Use centralized test data.
    - Store API payload templates in `src/data/datasets/{json,yaml,csv,excel}/*` — add the file for every supported format the project uses.
    - JSON/YAML hold the nested structure directly. CSV/Excel use flat `key,value,type` rows instead (dot-path `key`, e.g. `apiEvent.createEvent.price`; optional `type` of `string`|`number`|`boolean`, default `string` — set it explicitly for numeric fields like `price` or `totalSeats`).
-   - Load data with `TestData.load<T>("filename")`.
+   - Load data with `await TestData.load<T>("filename")` inside a `test.beforeAll`.
+   - Real credential values (a working account's email/password) go in as `{{key}}` placeholders, not literal values — `resolveSecrets()` (`src/data/utils/resolveSecrets.ts`) resolves them against `config/secrets/<env>.env` at load time.
    - Map payloads to typed models where possible.
 
 5. Handle auth and shared state in fixtures.

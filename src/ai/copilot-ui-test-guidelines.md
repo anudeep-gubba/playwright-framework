@@ -42,7 +42,8 @@ Use these guidelines when generating new UI tests, page objects, component wrapp
    - JSON/YAML hold the nested structure directly. CSV/Excel use flat `key,value,type` rows instead (dot-path `key`, e.g. `login.validUser.email`; optional `type` of `string`|`number`|`boolean`, default `string`).
    - Define type-safe data shapes in `src/data/models/*.ts`.
    - Reuse shared domain types from `src/models/*.ts` when the page object needs request payload contracts.
-   - Load data with `TestData.load<T>("filename")`.
+   - `TestData.load<T>("filename")` is async — call it once via `await` inside a `test.beforeAll`, assigning to a `let` declared above it, not at module scope (see `tests/authentication/login.spec.ts`).
+   - Real credential values (a working account's email/password) go in as `{{key}}` placeholders, not literal values — `resolveSecrets()` (`src/data/utils/resolveSecrets.ts`) resolves them against `config/secrets/<env>.env` at load time. Deliberately-invalid test values (wrong password, wrong email) aren't secrets and stay literal.
 
 5. Naming conventions.
    - Page object files: `LoginPage.ts`, `RegistrationPage.ts`, etc.
